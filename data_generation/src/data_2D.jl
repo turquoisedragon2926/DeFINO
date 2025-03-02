@@ -92,7 +92,7 @@ S = jutulModeling(model, tstep)
 
 
 nsample = 400
-nev = 30  # Number of eigenvalues and eigenvectors to compute
+nev = 20  # Number of eigenvalues and eigenvectors to compute
 nt = length(tstep)
 μ = 0.0   # Mean of the noise
 σ = 1.0   # Standard deviation of the noise
@@ -103,7 +103,9 @@ dist = Normal(μ, σ)
 # Generate Joint Samples #
 # ---------------------- #
 
-# addprocs(30)  # Leave 1 core for the main process
+if nprocs() == 1
+    addprocs(5)
+end
 println("num procs: ", nprocs())  # Check total number of processes (should be CPU_THREADS)
 
 # Load packages on all workers
@@ -191,12 +193,14 @@ for i = 1:nsample # 13
 
     # Repeat for 5 time steps
     for time_step in 1:5
-        println("time step $(time_step)") 
+        println("Sample $(i) time step $(time_step)") 
         state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1)[1]
         state_sat(x) = Saturations(state(x)[:state])
 
         # update simulator variables
-        cur_state = state(K) 
+        cur_state = state(K)
+        # Compute the pullback function
+        @time Fv, Fp = Zygote.pullback(state_sat, vec(K)) #v^TJ 
         state0_temp = deepcopy(cur_state[:state])
         cur_state_sat = Saturations(cur_state[:state])
 
@@ -204,7 +208,7 @@ for i = 1:nsample # 13
         imshow(reshape(cur_state_sat, n[1], n[end])', cmap="viridis")
         colorbar(fraction=0.04)
         title("Saturation at time step=$(time_step)")
-        savefig("Saturation_$(time_step).png")
+        savefig("img_$(nev)/ Sample_$(i)_Saturation_$(time_step).png")
         close("all")
 
         push!(states, cur_state)  # Store the current state in the states array
@@ -212,9 +216,6 @@ for i = 1:nsample # 13
         # ------------ #
         # Compute FIM  #
         # ------------ #
-
-        # Compute the pullback function
-        @time Fv, Fp = Zygote.pullback(state_sat, vec(K)) #v^TJ
 
         # @time dll = compute_gradient_analytical(cur_state_sat, Fp, σ, dist)
         # 305.549289 seconds (117.32 M allocations: 644.889 GiB, 11.60% gc time, 0.13% compilation time)
@@ -237,7 +238,7 @@ for i = 1:nsample # 13
         imshow(reshape(U_svd[:, 1], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
         colorbar(fraction=0.04)
         title("The Largest Left Singular Vector at time step = $(time_step)")
-        savefig("U_svd_$(time_step).png")
+        savefig("img_$(nev)/Sample_$(i)_U_svd_$(time_step).png")
         close("all")
 
         # Parallelize over `e` using `pmap`
@@ -249,7 +250,7 @@ for i = 1:nsample # 13
         imshow(reshape(Jv_results[:, 1], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
         colorbar(fraction=0.04)
         title("Jacobian Vector Products with the Largest LSV at time step = $(time_step)")
-        savefig("vjp_$(time_step).png")
+        savefig("img_$(nev)/Sample_$(i)_vjp_$(time_step).png")
         close("all")
 
         # Store results
