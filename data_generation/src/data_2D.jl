@@ -92,7 +92,7 @@ S = jutulModeling(model, tstep)
 nsample = 400
 nobs = 20
 # # Number of eigenvalues and eigenvectors to compute
-nev = 20
+nev = 40
 nt = length(tstep)
 μ = 0.0   # Mean of the noise
 σ = 1.0   # Standard deviation of the noise
@@ -109,50 +109,61 @@ println("num procs: ", nprocs())  # Check total number of processes (should be C
 # Load packages on all workers
 @everywhere using Zygote, Random, LinearAlgebra, Distributions, JutulDarcyRules 
 
-# Define function on all workers
-# @everywhere function compute_gradient(j, cur_state_sat, state_sat, dist, σ, K)
+# @everywhere function compute_gradient(j, cur_state_sat, pb, σ, dist)
 #     println("perturbation $(j)")
+#     # Generate noise and normalize it
 #     noise = rand(dist, size(cur_state_sat))
 #     noise ./= (maximum(abs.(noise)) * 2.0)
-
-#     perturbed_input = vec(cur_state_sat + noise)
-
-#     ll(x) = norm(perturbed_input - state_sat(x))^2 / (2 * σ^2)
-#     # dll(x) = 2 * noise * (perturbed_input - state_sat(x))
-
-#     outer_vector = nothing
+    
+#     # Create the perturbed input from the current state saturation
+#     # perturbed_input = vec(cur_state_sat + noise)
+    
+#     # Instead of re-calling pullback, use the precomputed F and pb.
+#     # The loss is:  L(x) = || perturbed_input - state_sat(x) ||^2/(2σ^2)
+#     # Its gradient at x = vec(K) is given by:
+#     #    dL/dx = pb((state_sat(vec(K)) - perturbed_input)/σ^2)[1]
+#     grad = nothing
 #     try
-#         outer_vector = Zygote.gradient((x) -> ll(x), vec(K))[1]
+#         grad = pb(noise)[1]
 #     catch e
-#         println("Gradient computation failed for perturbation $(j): ", e)
-#         outer_vector = zeros(length(vec(K)))  # Assign zeros on failure
+#         println("Pullback computation failed for perturbation $(j): ", e)
+#         grad = zeros(length(perturbed_input))
 #     end
-
-#     println("outvec", j)
-#     return outer_vector
+    
+#     println("outvec $(j)")
+#     return grad
 # end
-@everywhere function compute_gradient(j, cur_state_sat, pb, σ, dist)
-    println("perturbation $(j)")
-    # Generate noise and normalize it
-    noise = rand(dist, size(cur_state_sat))
-    noise ./= (maximum(abs.(noise)) * 2.0)
+
+function compute_gradient_analytical(cur_state_sat, pb, σ, dist)
+    # # Option 1: Generate noise and normalize it
+    # noise = rand(dist, size(cur_state_sat))
+    # noise ./= (maximum(abs.(noise)))
+
+    # Option 2: compute orthonormal bases
+    println("Computing Orthonormal Bases")
+    nonzero_idx = findall(x -> x != 0, cur_state_sat)
+    # Step 2: Generate a random vector on that support.
+    r = randn(length(nonzero_idx))
+    # Step 3: Normalize it to create a unit vector.
+    r = r / norm(r)
+    # Step 4: Create a full vector with zeros and assign the random values at the nonzero positions.
+    noise = zeros(length(cur_state_sat))
+    noise[nonzero_idx] = r
+    println("Computed Orthonormal Bases")
+    println("size of Q: ", size(noise))
     
-    # Create the perturbed input from the current state saturation
-    # perturbed_input = vec(cur_state_sat + noise)
-    
-    # Instead of re-calling pullback, use the precomputed F and pb.
-    # The loss is:  L(x) = || perturbed_input - state_sat(x) ||^2/(2σ^2)
-    # Its gradient at x = vec(K) is given by:
-    #    dL/dx = pb((state_sat(vec(K)) - perturbed_input)/σ^2)[1]
+    ## Instead of re-calling pullback, use the precomputed F and pb.
+    ## The loss is:  L(x) = || perturbed_input - state_sat(x) ||^2/(2σ^2)
+    ## Its gradient at x = vec(K) is given by:
+    ##    dL/dx = pb((state_sat(vec(K)) - perturbed_input)/σ^2)[1]
     grad = nothing
     try
         grad = pb(noise)[1]
+        println("size of grad", size(grad))
     catch e
-        println("Pullback computation failed for perturbation $(j): ", e)
+        println("Pullback computation failed: ", e)
         grad = zeros(length(perturbed_input))
     end
-    
-    println("outvec $(j)")
     return grad
 end
 
@@ -225,12 +236,13 @@ for i = 1:nsample # 13
         # Compute the pullback function
         Fv, Fp = Zygote.pullback(state_sat, vec(K))
 
-        dll = zeros(n[1]*n[end], nev)
-        # Run gradient computations in parallel using Distributed.jl (j, cur_state_sat, pb, σ, dist)
-        gradient_results = pmap(j -> compute_gradient(j, cur_state_sat, Fp, σ, dist), 1:nobs)
-        temp = hcat(gradient_results...)
-        println("size temp", size(temp))
-        dll .= temp
+        # dll = zeros(n[1]*n[end], nev)
+        # # Run gradient computations in parallel using Distributed.jl (j, cur_state_sat, pb, σ, dist)
+        # gradient_results = pmap(j -> compute_gradient(j, cur_state_sat, Fp, σ, dist), 1:nobs)
+        # temp = hcat(gradient_results...)
+        # println("size temp", size(temp))
+        # dll .= temp
+        dll = compute_gradient_analytical(cur_state_sat, Fp, σ, dist)
 
         U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
         eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[end], nev)
