@@ -16,6 +16,7 @@ using JutulDarcyRules
 using Random
 Random.seed!(2023)
 using PyPlot
+@pyimport matplotlib.colors as mcolors
 using JLD2
 using Printf
 using Statistics: mean, std
@@ -90,9 +91,7 @@ S = jutulModeling(model, tstep)
 
 
 nsample = 400
-nobs = 20
-# # Number of eigenvalues and eigenvectors to compute
-nev = 40
+nev = 30  # Number of eigenvalues and eigenvectors to compute
 nt = length(tstep)
 μ = 0.0   # Mean of the noise
 σ = 1.0   # Standard deviation of the noise
@@ -103,36 +102,11 @@ dist = Normal(μ, σ)
 # Generate Joint Samples #
 # ---------------------- #
 
-# addprocs(5)  # Leave 1 core for the main process
+addprocs(30)  # Leave 1 core for the main process
 println("num procs: ", nprocs())  # Check total number of processes (should be CPU_THREADS)
 
 # Load packages on all workers
 @everywhere using Zygote, Random, LinearAlgebra, Distributions, JutulDarcyRules 
-
-# @everywhere function compute_gradient(j, cur_state_sat, pb, σ, dist)
-#     println("perturbation $(j)")
-#     # Generate noise and normalize it
-#     noise = rand(dist, size(cur_state_sat))
-#     noise ./= (maximum(abs.(noise)) * 2.0)
-    
-#     # Create the perturbed input from the current state saturation
-#     # perturbed_input = vec(cur_state_sat + noise)
-    
-#     # Instead of re-calling pullback, use the precomputed F and pb.
-#     # The loss is:  L(x) = || perturbed_input - state_sat(x) ||^2/(2σ^2)
-#     # Its gradient at x = vec(K) is given by:
-#     #    dL/dx = pb((state_sat(vec(K)) - perturbed_input)/σ^2)[1]
-#     grad = nothing
-#     try
-#         grad = pb(noise)[1]
-#     catch e
-#         println("Pullback computation failed for perturbation $(j): ", e)
-#         grad = zeros(length(perturbed_input))
-#     end
-    
-#     println("outvec $(j)")
-#     return grad
-# end
 
 function compute_gradient_analytical(cur_state_sat, pb, σ, dist)
     # # Option 1: Generate noise and normalize it
@@ -140,7 +114,7 @@ function compute_gradient_analytical(cur_state_sat, pb, σ, dist)
     # noise ./= (maximum(abs.(noise)))
 
     # Option 2: compute orthonormal bases
-    println("Computing Orthonormal Bases")
+    println("Computing Randomized Orthonormal Bases")
     nonzero_idx = findall(x -> x != 0, cur_state_sat)
     # Step 2: Generate a random vector on that support.
     r = randn(length(nonzero_idx))
@@ -159,16 +133,14 @@ function compute_gradient_analytical(cur_state_sat, pb, σ, dist)
     grad = nothing
     try
         grad = pb(noise)[1]
-        println("size of grad", size(grad))
+        println("size of grad", size(grad)) # why is this 256 x 256?
     catch e
         println("Pullback computation failed: ", e)
-        grad = zeros(length(perturbed_input))
+        grad = zeros(length(cur_state_sat))
     end
     return grad
 end
 
-
-# Define function for parallel computation
 @everywhere function compute_pullback(Fp, col_U)
     try
         return Fp(col_U)[1]
@@ -177,6 +149,22 @@ end
         return zeros(length(col_U))  # Return zeros on failure
     end
 end
+
+@everywhere function compute_gradient_with_pullback(j, cur_state_sat, pb, σ, dist)
+    println("perturbation $(j)")
+    noise = rand(dist, size(cur_state_sat))
+    noise ./= (maximum(abs.(noise)))
+
+    grad = nothing
+    try
+        grad = pb(noise)[1]
+    catch e
+        println("Pullback computation failed for perturbation $(j): ")
+        grad = zeros(length(cur_state_sat))
+    end
+    return grad
+end
+
 
 for i = 1:nsample # 13
     Base.flush(Base.stdout)
@@ -197,19 +185,18 @@ for i = 1:nsample # 13
     mesh = CartesianMesh(model)
     logTrans(x) = log.(KtoTrans(mesh, K1to3(x)))
     state00 = jutulSimpleState(model)
-    state0 = state00.state
+    state0 = state00.state # 7 fields
     states = []
 
-    # Repeat for 8 time steps
-    for time_step in 1:8
+    # Repeat for 5 time steps
+    for time_step in 1:5
         println("time step $(time_step)") 
         state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1)[1]
         state_sat(x) = Saturations(state(x)[:state])
-        pressure(x) = state(x)[:state][:Pressure]
 
         # update simulator variables
-        state0_temp = deepcopy(state0)
         cur_state = state(K) 
+        state0_temp = deepcopy(cur_state[:state])
         cur_state_sat = Saturations(cur_state[:state])
 
         figure()
@@ -219,14 +206,6 @@ for i = 1:nsample # 13
         savefig("Saturation_$(time_step).png")
         close("all")
 
-        if time_step == 1
-            state0_temp[:Saturations] = cur_state_sat
-            state0_temp[:Pressure] = pressure(K)
-        else
-            state0_temp[:state][:Saturations] = cur_state_sat
-            state0_temp[:state][:Pressure] = pressure(K)
-        end
-
         push!(states, cur_state)  # Store the current state in the states array
 
         # ------------ #
@@ -234,21 +213,43 @@ for i = 1:nsample # 13
         # ------------ #
 
         # Compute the pullback function
-        Fv, Fp = Zygote.pullback(state_sat, vec(K))
+        @time Fv, Fp = Zygote.pullback(state_sat, vec(K)) #v^TJ
 
-        # dll = zeros(n[1]*n[end], nev)
-        # # Run gradient computations in parallel using Distributed.jl (j, cur_state_sat, pb, σ, dist)
-        # gradient_results = pmap(j -> compute_gradient(j, cur_state_sat, Fp, σ, dist), 1:nobs)
-        # temp = hcat(gradient_results...)
-        # println("size temp", size(temp))
-        # dll .= temp
-        dll = compute_gradient_analytical(cur_state_sat, Fp, σ, dist)
+        # @time dll = compute_gradient_analytical(cur_state_sat, Fp, σ, dist)
+        # 305.549289 seconds (117.32 M allocations: 644.889 GiB, 11.60% gc time, 0.13% compilation time)
+        # size of grad: 256 x 256
+        dll = zeros(n[1]*n[end], nev)
+        # Run gradient computations in parallel using Distributed.jl 
+        gradient_results = pmap(j -> compute_gradient_with_pullback(j, cur_state_sat, Fp, σ, dist), 1:nev)
+        # Store results in dll
+        temp = hcat(gradient_results...)
+        println("size temp", size(temp))
+        dll .= temp
+        println("size dll", size(dll))
 
-        U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
+        @time U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
+        # 0.000357 seconds (20 allocations: 512.766 KiB)
+        println("size", size(U_svd))
         eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[end], nev)
 
+        figure()
+        imshow(reshape(U_svd[:, 1], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
+        colorbar(fraction=0.04)
+        title("The Largest Left Singular Vector at time step = $(time_step)")
+        savefig("U_svd_$(time_step).png")
+        close("all")
+
         # Parallelize over `e` using `pmap`
+        # Jv_results = Fp(reshape(U_svd, n[1]*n[end]))[1]
+
         Jv_results = pmap(e -> compute_pullback(Fp, U_svd[:, e]), 1:nev)
+
+        figure()
+        imshow(reshape(Jv_results[:, 1], n[1], n[end])', cmap="seismic", ,norm=mcolors.CenteredNorm(0))
+        colorbar(fraction=0.04)
+        title("Jacobian Vector Products with the Largest LSV at time step = $(time_step)")
+        savefig("vjp_$(time_step).png")
+        close("all")
 
         # Store results
         for e in 1:nev
@@ -258,9 +259,8 @@ for i = 1:nsample # 13
         end
         state0 = deepcopy(state0_temp)
     end
-
-    save_object("num_obs_$(nobs)/FIM_eigvec_sample_$(i)_nobs_$(nobs).jld2", eigvec_save)
-    save_object("num_obs_$(nobs)/FIM_vjp_sample_$(i)_nobs_$(nobs).jld2", one_Jvs)
-    save_object("num_obs_$(nobs)/states_sample_$(i)_nobs_$(nobs).jld2", states)
+    save_object("num_ev_$(nev)/FIM_eigvec_sample_$(i).jld2", eigvec_save)
+    save_object("num_ev_$(nev)/FIM_vjp_sample_$(i).jld2", one_Jvs)
+    save_object("num_ev_$(nev)/states_sample_$(i).jld2", states)
 end
 
