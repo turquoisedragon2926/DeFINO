@@ -16,6 +16,7 @@ using JutulDarcyRules
 using Random
 Random.seed!(2023)
 using PyPlot
+using PyCall
 @pyimport matplotlib.colors as mcolors
 using JLD2
 using Printf
@@ -102,7 +103,7 @@ dist = Normal(μ, σ)
 # Generate Joint Samples #
 # ---------------------- #
 
-addprocs(30)  # Leave 1 core for the main process
+# addprocs(30)  # Leave 1 core for the main process
 println("num procs: ", nprocs())  # Check total number of processes (should be CPU_THREADS)
 
 # Load packages on all workers
@@ -245,7 +246,7 @@ for i = 1:nsample # 13
         Jv_results = pmap(e -> compute_pullback(Fp, U_svd[:, e]), 1:nev)
 
         figure()
-        imshow(reshape(Jv_results[:, 1], n[1], n[end])', cmap="seismic", ,norm=mcolors.CenteredNorm(0))
+        imshow(reshape(Jv_results[:, 1], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
         colorbar(fraction=0.04)
         title("Jacobian Vector Products with the Largest LSV at time step = $(time_step)")
         savefig("vjp_$(time_step).png")
