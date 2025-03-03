@@ -243,9 +243,9 @@ for i = 1:nsample # 13
             semilogy(S_svd, "o-")
             xlabel("Index")
             ylabel("Singular Value")
-            title("Singular Value Decay")
+            title("Singular Value Decay at time step = $(time_step)")
             grid(true)
-            savefig("img_$(nev)/Sample_$(i)_SingularValue.png")
+            savefig("img_$(nev)/Sample_$(i)_SingularValue_$(time_step).png")
             close("all")
 
             for j in 1:nev
