@@ -54,15 +54,7 @@ function resize_array(A, new_size)
 end
 
 BroadK_rescaled = resize_array(BroadK, (size(BroadK)[1], dx, dy))
-figure()
-imshow(reshape(BroadK_rescaled[1, :, :], n[1], n[end])', cmap="viridis")
-scatter(130, 205, color="red")
-colorbar(fraction=0.04)
-title("Permeability Model")
-savefig("Downsampled_Perm.png")
-close("all")
 
-# BroadK_rescaled = BroadK[:, 1:dx, 256-dy+1:256]
 # permeability
 K_all = md * BroadK_rescaled
 print(size(K_all))
@@ -75,15 +67,25 @@ h = (top_layer-1) * 1.0 * d[end]
 model = jutulModel(n, d, vec(ϕ), K1to3(K_all[1,:,:]; kvoverkh=0.36), h, false)
 
 ## simulation time steppings
-tstep = 80 * ones(1) #in days
+tstep = 150 * ones(1) #in days
 tot_time = sum(tstep)
 
 ## injection & production
-inj_loc = (130, 1, 205) .* d
-irate = 5e-3
+inj_loc_idx = (130, 1 , 205) #(145, 1 , 236)
+inj_loc = inj_loc_idx .* d
+irate = 8e-3
 q = jutulSource(irate, [inj_loc]) # injection
 # set up modeling operator
 S = jutulModeling(model, tstep)
+
+
+figure()
+imshow(reshape(BroadK_rescaled[1, :, :], n[1], n[end])', cmap="viridis")
+scatter(inj_loc_idx[1], inj_loc_idx[3], color="red")
+colorbar(fraction=0.04)
+title("Permeability Model")
+savefig("Downsampled_Perm.png")
+close("all")
 
 
 # ------------------ #
@@ -91,8 +93,8 @@ S = jutulModeling(model, tstep)
 # ------------------ #
 
 
-nsample = 400
-nev = 20  # Number of eigenvalues and eigenvectors to compute
+nsample = 25
+nev = 8  # Number of eigenvalues and eigenvectors to compute
 nt = length(tstep)
 μ = 0.0   # Mean of the noise
 σ = 1.0   # Standard deviation of the noise
@@ -104,48 +106,16 @@ dist = Normal(μ, σ)
 # ---------------------- #
 
 if nprocs() == 1
-    addprocs(7, exeflags=["--threads=2"])
+    addprocs(8, exeflags=["--threads=2"])
 end
 println("num procs: ", nprocs())  # Check total number of processes (should be CPU_THREADS)
 
 # Load packages on all workers
 @everywhere using Zygote, Random, LinearAlgebra, Distributions, JutulDarcyRules 
 
-function compute_gradient_analytical(cur_state_sat, pb, σ, dist)
-    # # Option 1: Generate noise and normalize it
-    # noise = rand(dist, size(cur_state_sat))
-    # noise ./= (maximum(abs.(noise)))
-
-    # Option 2: compute orthonormal bases
-    println("Computing Randomized Orthonormal Bases")
-    nonzero_idx = findall(x -> x != 0, cur_state_sat)
-    # Step 2: Generate a random vector on that support.
-    r = randn(length(nonzero_idx))
-    # Step 3: Normalize it to create a unit vector.
-    r = r / norm(r)
-    # Step 4: Create a full vector with zeros and assign the random values at the nonzero positions.
-    noise = zeros(length(cur_state_sat))
-    noise[nonzero_idx] = r
-    println("Computed Orthonormal Bases")
-    println("size of Q: ", size(noise))
-    
-    ## Instead of re-calling pullback, use the precomputed F and pb.
-    ## The loss is:  L(x) = || perturbed_input - state_sat(x) ||^2/(2σ^2)
-    ## Its gradient at x = vec(K) is given by:
-    ##    dL/dx = pb((state_sat(vec(K)) - perturbed_input)/σ^2)[1]
-    grad = nothing
-    try
-        grad = pb(noise)[1]
-        println("size of grad", size(grad)) # why is this 256 x 256?
-    catch e
-        println("Pullback computation failed: ", e)
-        grad = zeros(length(cur_state_sat))
-    end
-    return grad
-end
-
 @everywhere function compute_pullback(Fp, col_U)
     try
+        println("col_U", size(col_U))
         return @time Fp(col_U)[1]
     catch e
         println("Pullback computation failed: ", e)
@@ -153,43 +123,44 @@ end
     end
 end
 
-
-@everywhere function generate_orthogonal_noise(saturation, shape::Tuple, nev::Int)
-    # Flattened noise vector length is product(shape)
-    N = prod(shape)
-    # Create a random matrix of size (N x nev)
-    R = randn(N, nev)
-    # QR decomposition; Q will be (N x nev) with orthonormal columns
-    Q = qr(R).Q
-    # Reshape each column back to the desired shape
-    noise_vectors = [reshape(Q[:, j], shape) for j in 1:nev]
-    return noise_vectors
-end
-
-
-@everywhere function compute_gradient_with_pullback(j, cur_state_sat, pb, σ, dist)
-    println("perturbation $(j)")
-    noise = rand(dist, size(cur_state_sat))
-    noise ./= (maximum(abs.(noise)))
-
-    grad = nothing
-    try
-        grad = @time pb(noise)[1]
-    catch e
-        println("Pullback computation failed for perturbation $(j): ")
-        grad = zeros(length(cur_state_sat))
-    end
-    return grad
-end
-
 @everywhere function compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
     println("Perturbation $(j) processed on worker $(myid())")
     try
-        return Fp(noise)[1]
+        return @time Fp(noise)[1]
     catch e
         println("Pullback computation failed for perturbation $(j): ", e)
         return zeros(length(cur_state_sat))
     end
+end
+
+@everywhere function generate_masked_noise_column(mask, n)
+    # Create a zero vector of length n
+    v = zeros(n)
+    # Fill in the positions given by the mask with random normal values
+    v[mask] .= randn(sum(mask)) #size of v = (256*256,)
+    v ./= (maximum(abs.(v)))
+    return v
+end
+
+@everywhere function generate_orthogonal_masked_noise(saturation, shape::Tuple, nev::Int)
+    # Define the mask and total number of elements
+    mask = (saturation .!= 0)
+    n = prod(shape) #size of n = (256*256,)
+    
+    # Generate each noise column in parallel using pmap
+    noise_columns = pmap(_ -> generate_masked_noise_column(mask, n), 1:nev)
+    # Combine the noise columns into a matrix R (n x nev)
+    R = hcat(noise_columns...)
+    # println("sizeR", size(R))
+    # Perform QR decomposition so that Q's columns are orthonormal.
+    # Because each column of R is zero outside the mask, every column of Q
+    # will also live in that subspace.
+    Q = @time qr(R).Q
+    # println("sizeQ", size(Q)) #  0.004628 seconds (6 allocations: 1.000 MiB) 
+    # println("shape", shape)
+    # Reshape each orthonormal column back to the desired multidimensional shape
+    noise_vectors = [reshape(Q[:, j], shape) for j in 1:nev]
+    return noise_vectors
 end
 
 
@@ -249,60 +220,67 @@ for i = 1:nsample # 13
         # Run gradient computations in parallel using Distributed.jl 
         # gradient_results = pmap(j -> compute_gradient_with_pullback(j, cur_state_sat, Fp, σ, dist), 1:nev)
         # Generate nev orthogonal noise vectors for cur_state_sat's shape.
-        noise_vectors = generate_orthogonal_noise(size(cur_state_sat), nev)
+        noise_vectors = @time generate_orthogonal_masked_noise(cur_state_sat, size(cur_state_sat), nev)
 
-        # Then, use pmap to compute the pullback for each noise vector:
-        # gradient_results = pmap(j -> begin
-        #     noise = noise_vectors[j]
-        #     try
-        #         return Fp(noise)[1]
-        #     catch e
-        #         println("Pullback computation failed for perturbation $(j): ", e)
-        #         return zeros(length(cur_state_sat))
-        #     end
-        # end, 1:nev)
         gradient_results = pmap(j -> begin
             noise = noise_vectors[j]
             compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
         end, 1:nev)
-
-        
+     
         # Store results in dll
-        temp = hcat(gradient_results...)
-        println("size temp", size(temp))
-        dll .= temp
+        dll .= hcat(gradient_results...)
+        # println("size temp", size(temp))
+        # dll .= temp
         println("size dll", size(dll))
 
         @time U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
-        # 0.000357 seconds (20 allocations: 512.766 KiB)
-        println("size", size(U_svd), size(VT_svd))
+        println("size", size(U_svd), size(S_svd),size(VT_svd))
         eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[end], nev)
 
-        figure()
-        imshow(reshape(U_svd[:, 1], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
-        colorbar(fraction=0.04)
-        title("The Largest Left Singular Vector at time step = $(time_step)")
-        savefig("img_$(nev)/Sample_$(i)_U_svd_$(time_step).png")
-        close("all")
+        # Create a new figure
+        if i == 1
+            figure()
+            semilogy(S_svd, "o-")
+            xlabel("Index")
+            ylabel("Singular Value")
+            title("Singular Value Decay")
+            grid(true)
+            savefig("img_$(nev)/Sample_$(i)_SingularValue.png")
+            close("all")
+
+            for j in 1:nev
+                figure()
+                imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
+                colorbar(fraction=0.04)
+                title("Left Singular Vector $(j) at time step = $(time_step)")
+                filename = "img_$(nev)/Sample_$(i)_U_svd_$(time_step)_$(j).png"
+                savefig(filename)
+                close("all")
+            end
+        end
 
         # Parallelize over `e` using `pmap`
-        # Jv_results = Fp(reshape(U_svd, n[1]*n[end]))[1]
-
         println("Compute vTJ")
-        Jv_results = pmap(e -> compute_pullback(Fp, U_svd[:, e]), 1:nev)
+        Jv_results = @time pmap(e -> compute_pullback(Fp, U_svd[:, e]), 1:nev)
+        Jv_matrix = hcat(Jv_results...)
+        println(size(Jv_results), size(Jv_matrix))
 
-        figure()
-        imshow(reshape(Jv_results[:, 1], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
-        colorbar(fraction=0.04)
-        title("Jacobian Vector Products with the Largest LSV at time step = $(time_step)")
-        savefig("img_$(nev)/Sample_$(i)_vjp_$(time_step).png")
-        close("all")
+        if i == 1
+            for j in 1:nev
+                figure()
+                imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
+                colorbar(fraction=0.04)
+                title("Jacobian Vector Products with LSV $(j) at t = $(time_step)")
+                filename = "img_$(nev)/Sample_$(i)_vjp_$(time_step)_$(j).png"
+                savefig(filename)
+                close("all")
+            end
+        end
 
         # Store results
         for e in 1:nev
-            println("size lsv", size(U_svd[:, e]))
-            println("size", size(Jv_results[e]))
-            one_Jvs[:, e, time_step] = Jv_results[e]
+            println("size", size(Jv_matrix[:, e]))
+            one_Jvs[:, e, time_step] = Jv_matrix[:, e]
         end
         state0 = deepcopy(state0_temp)
     end
