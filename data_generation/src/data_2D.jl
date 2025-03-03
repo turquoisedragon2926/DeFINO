@@ -104,7 +104,7 @@ dist = Normal(μ, σ)
 # ---------------------- #
 
 if nprocs() == 1
-    addprocs(5)
+    addprocs(7, exeflags=["--threads=2"])
 end
 println("num procs: ", nprocs())  # Check total number of processes (should be CPU_THREADS)
 
@@ -146,12 +146,26 @@ end
 
 @everywhere function compute_pullback(Fp, col_U)
     try
-        return Fp(col_U)[1]
+        return @time Fp(col_U)[1]
     catch e
         println("Pullback computation failed: ", e)
         return zeros(length(col_U))  # Return zeros on failure
     end
 end
+
+
+@everywhere function generate_orthogonal_noise(saturation, shape::Tuple, nev::Int)
+    # Flattened noise vector length is product(shape)
+    N = prod(shape)
+    # Create a random matrix of size (N x nev)
+    R = randn(N, nev)
+    # QR decomposition; Q will be (N x nev) with orthonormal columns
+    Q = qr(R).Q
+    # Reshape each column back to the desired shape
+    noise_vectors = [reshape(Q[:, j], shape) for j in 1:nev]
+    return noise_vectors
+end
+
 
 @everywhere function compute_gradient_with_pullback(j, cur_state_sat, pb, σ, dist)
     println("perturbation $(j)")
@@ -160,13 +174,24 @@ end
 
     grad = nothing
     try
-        grad = pb(noise)[1]
+        grad = @time pb(noise)[1]
     catch e
         println("Pullback computation failed for perturbation $(j): ")
         grad = zeros(length(cur_state_sat))
     end
     return grad
 end
+
+@everywhere function compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
+    println("Perturbation $(j) processed on worker $(myid())")
+    try
+        return Fp(noise)[1]
+    catch e
+        println("Pullback computation failed for perturbation $(j): ", e)
+        return zeros(length(cur_state_sat))
+    end
+end
+
 
 
 for i = 1:nsample # 13
@@ -222,7 +247,26 @@ for i = 1:nsample # 13
         # size of grad: 256 x 256
         dll = zeros(n[1]*n[end], nev)
         # Run gradient computations in parallel using Distributed.jl 
-        gradient_results = pmap(j -> compute_gradient_with_pullback(j, cur_state_sat, Fp, σ, dist), 1:nev)
+        # gradient_results = pmap(j -> compute_gradient_with_pullback(j, cur_state_sat, Fp, σ, dist), 1:nev)
+        # Generate nev orthogonal noise vectors for cur_state_sat's shape.
+        noise_vectors = generate_orthogonal_noise(size(cur_state_sat), nev)
+
+        # Then, use pmap to compute the pullback for each noise vector:
+        # gradient_results = pmap(j -> begin
+        #     noise = noise_vectors[j]
+        #     try
+        #         return Fp(noise)[1]
+        #     catch e
+        #         println("Pullback computation failed for perturbation $(j): ", e)
+        #         return zeros(length(cur_state_sat))
+        #     end
+        # end, 1:nev)
+        gradient_results = pmap(j -> begin
+            noise = noise_vectors[j]
+            compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
+        end, 1:nev)
+
+        
         # Store results in dll
         temp = hcat(gradient_results...)
         println("size temp", size(temp))
@@ -231,7 +275,7 @@ for i = 1:nsample # 13
 
         @time U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
         # 0.000357 seconds (20 allocations: 512.766 KiB)
-        println("size", size(U_svd))
+        println("size", size(U_svd), size(VT_svd))
         eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[end], nev)
 
         figure()
@@ -244,6 +288,7 @@ for i = 1:nsample # 13
         # Parallelize over `e` using `pmap`
         # Jv_results = Fp(reshape(U_svd, n[1]*n[end]))[1]
 
+        println("Compute vTJ")
         Jv_results = pmap(e -> compute_pullback(Fp, U_svd[:, e]), 1:nev)
 
         figure()
