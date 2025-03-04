@@ -1,4 +1,4 @@
-## A 2D example
+## A 3D example
 using Pkg; Pkg.activate(".")
 
 nthreads = try
@@ -30,17 +30,51 @@ using Interpolations
 # Load Dataset       #
 # ------------------ #
 
-JLD2.@load "../../../../Diff_MultiPhysics/FNO-NF.jl/scripts/wise_perm_models_2000_new.jld2" #phi = porosity
+JLD2.@load "../../Diff_MultiPhysics/FNO-NF.jl/scripts/AspireK_128cube_firstdim_sampleid.jld2"
+
+# ------------------ #
+# Helper Functions - #
+# ------------------ #
+
+function Ktoϕ(K::T; α=T(48.63057324840764)) where T
+    p = Polynomial([-K,2*K,-K, α^2])
+    return minimum(real(roots(p)[findall(real(roots(p)).== roots(p))]))
+end
+    
+function padϕ(ϕ::Matrix{T}) where T
+    return hcat(vcat(T(1e8)*ones(T, 1, size(ϕ,2)-1), ϕ[2:end-1,1:end-1], T(1e8)*ones(T, 1, size(ϕ,2)-1)),
+    T(1e8)*ones(T, size(ϕ,1), 1))
+end
+
+function padϕ(ϕ::Array{T, 3}) where T
+    rv = copy(ϕ)
+    # the following comments assume x,y,z coordinates are longitude (west-east), latitude (north-south), depth.  but it's arbitrary.
+    # west side
+    rv[1,:,:]   .= 1e8
+    # east side
+    rv[end,:,:] .= 1e8
+    # north side
+    rv[:,1,:]   .= 1e8
+    # south side
+    rv[:,end,:] .= 1e8
+    # under side
+    rv[:,:,end] .= 1e8
+    # leave the top side alone, it's supposed to be caprock
+    rv
+end
+
 
 # ------------------ #
 # Setting            #
 # ------------------ #
 
 ## grid size
-dx = 256
-dy = 256
-n = (dx, 1, dy)
-d = (15.0, 10.0, 15.0) # in meters
+dx = 30
+n = (dx, dx, dx)
+d = (12.5f0,12.5f0,12.5f0)
+d1 = Float64.(d)
+dt = 80 #80;
+nt = 1;
 
 # rescale permeability
 function resize_array(A, new_size)
@@ -50,14 +84,18 @@ function resize_array(A, new_size)
     return [etp(x...) for x in Iterators.product(xs...)]
 end
 
+# permeability
 BroadK_rescaled = resize_array(BroadK, (size(BroadK)[1], dx, dy))
 
-# permeability
 K_all = md * BroadK_rescaled
 println("K_all size: ", size(K_all))
 
+# porosity
+# ϕ = Ktoϕ.(AspireK[index,:,:,:])
+# por = ϕ
+
 # Define JutulModel
-phi_rescaled = resize_array(phi, (dx,dy))
+phi_rescaled = resize_array(phi, (dx,dx,dx))
 ϕ = phi_rescaled
 top_layer = 70
 h = (top_layer-1) * 1.0 * d[end]  
@@ -86,7 +124,7 @@ close("all")
 # Setting for FIM    #
 # ------------------ #
 
-nsample = 200
+nsample = 25
 nev = 8  # Number of eigenvalues and eigenvectors to compute
 nt = length(tstep)
 μ = 0.0   # Mean of the noise
@@ -146,7 +184,7 @@ end
     return noise_vectors
 end
 
-for i = 14:nsample
+for i = 2:nsample
     Base.flush(Base.stdout)
 
     Ks = zeros(n[1], n[end], nsample)
@@ -210,7 +248,7 @@ for i = 14:nsample
         println("size U_svd: ", size(U_svd), " S_svd: ", size(S_svd), " VT_svd: ", size(VT_svd))
         eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[end], nev)
 
-        if i == 14
+        if i == 2
             figure()
             semilogy(S_svd, "o-")
             xlabel("Index")
@@ -222,7 +260,7 @@ for i = 14:nsample
 
             for j in 1:nev
                 figure()
-                imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="managua", norm=mcolors.CenteredNorm(0))
+                imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Left Singular Vector $(j) at time step = $(time_step)")
                 filename = "img_$(nev)/Sample_$(i)_U_svd_$(time_step)_$(j).png"
@@ -236,10 +274,10 @@ for i = 14:nsample
         Jv_matrix = hcat(Jv_results...)
         println("Jv_matrix size: ", size(Jv_matrix))
 
-        if i == 14
+        if i == 2
             for j in 1:nev
                 figure()
-                imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="berlin", norm=mcolors.CenteredNorm(0))
+                imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Jacobian Vector Products with LSV $(j) at t = $(time_step)")
                 filename = "img_$(nev)/Sample_$(i)_vjp_$(time_step)_$(j).png"

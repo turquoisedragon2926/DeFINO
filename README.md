@@ -8,5 +8,5 @@ In REPL,
 
 ```
 cd(data_generation/src)
-include(data_2D.jl)
+include(data_2D_memory_opt.jl)
 ```
