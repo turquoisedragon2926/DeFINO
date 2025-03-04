@@ -4,9 +4,22 @@ This repository is for implementing Derivative-based Fisher-score Informed Neura
 
 ## Generating Joint Samples
 
-In REPL,
+To create joint samples, first create two empty folders
+
+```
+data_generation/src/img_{num of eigenvectors}/
+data_generation/src/num_ev_{num of eigenvectors}/
+```
+
+Then in REPL,
 
 ```
 cd(data_generation/src)
 include(data_2D_memory_opt.jl)
 ```
+
+This file will generate the followings in the two empty folders we created above:
+
+- saturation field
+- eigenvectors of Fisher Information Matrix (FIM)
+- vector Jacobian product when $v$ = eigenvectors of FIM
