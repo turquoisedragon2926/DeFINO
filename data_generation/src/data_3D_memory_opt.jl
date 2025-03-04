@@ -63,6 +63,31 @@ function padϕ(ϕ::Array{T, 3}) where T
     rv
 end
 
+# rescale permeability
+function resize_array(A, new_size)
+    itp = interpolate(A, BSpline(Linear()))  # Linear interpolation
+    etp = extrapolate(itp, Line())          # Extrapolation method
+    xs = [range(1, stop=size(A, i), length=new_size[i]) for i in 1:ndims(A)]
+    return [etp(x...) for x in Iterators.product(xs...)]
+end
+
+function plot_saturation_pressure(state0, n, index)
+    fig = figure(figsize=(20, 12))
+
+    ax1 = subplot(1, 2, 1)
+    reshaped_sat = reshape(Saturations(state0[:state]), n[1], n[2], n[end])
+    im1 = imshow(reshaped_sat[index, :, :]')
+    colorbar(im1, ax=ax1, fraction=0.05)
+    title("Saturation")
+
+    ax2 = subplot(1, 2, 2)
+    reshaped_pres = reshape(state0[:state][:Reservoir][:Pressure], n[1], n[2], n[end])
+    im2 = imshow(reshaped_pres[index, :, :]')
+    colorbar(im2, ax=ax2, fraction=0.05)
+    title("Pressure")
+
+    show()
+end
 
 # ------------------ #
 # Setting            #
@@ -76,39 +101,31 @@ d1 = Float64.(d)
 dt = 80 #80;
 nt = 1;
 
-# rescale permeability
-function resize_array(A, new_size)
-    itp = interpolate(A, BSpline(Linear()))  # Linear interpolation
-    etp = extrapolate(itp, Line())          # Extrapolation method
-    xs = [range(1, stop=size(A, i), length=new_size[i]) for i in 1:ndims(A)]
-    return [etp(x...) for x in Iterators.product(xs...)]
-end
-
 # permeability
-BroadK_rescaled = resize_array(BroadK, (size(BroadK)[1], dx, dy))
-
-K_all = md * BroadK_rescaled
-println("K_all size: ", size(K_all))
+K_all = md * AspireK[:,:,:,:]
 
 # porosity
-# ϕ = Ktoϕ.(AspireK[index,:,:,:])
-# por = ϕ
+ϕ = Ktoϕ.(AspireK[index,:,:,:])
+por = ϕ
+
+# rescale
+K_resized = resize_array(K_all, new_size)
+ϕ_resized = resize_array(por, new_size)
+println("K_all size: ", size(K_all))
 
 # Define JutulModel
-phi_rescaled = resize_array(phi, (dx,dx,dx))
-ϕ = phi_rescaled
 top_layer = 70
 h = (top_layer-1) * 1.0 * d[end]  
-model = jutulModel(n, d, vec(ϕ), K1to3(K_all[1,:,:]; kvoverkh=0.36), h, true)
+model = jutulModel(n, d1, vec(padϕ(ϕ_resized)), K1to3(K_resized; kvoverkh=0.36), h, true)
 
 ## simulation time steppings
-tstep = 150 * ones(1) #in days
+tstep = dt * ones(1) #in days
 tot_time = sum(tstep)
 
 ## injection & production
-inj_loc_idx = (130, 1 , 205)
+inj_loc_idx = (1, 28 , 28)
 inj_loc = inj_loc_idx .* d
-irate = 6e-3
+irate = 0.03f0
 q = jutulSource(irate, [inj_loc])
 S = jutulModeling(model, tstep)
 
@@ -126,7 +143,6 @@ close("all")
 
 nsample = 25
 nev = 8  # Number of eigenvalues and eigenvectors to compute
-nt = length(tstep)
 μ = 0.0   # Mean of the noise
 σ = 1.0   # Standard deviation of the noise
 dist = Normal(μ, σ)
