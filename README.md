@@ -4,11 +4,18 @@ This repository is for implementing Derivative-based Fisher-score Informed Neura
 
 ## Generating Joint Samples
 
-To create joint samples, first create two empty folders
+To create joint samples in 2D, first create two empty folders
 
 ```
 data_generation/src/img_{num of eigenvectors}/
 data_generation/src/num_ev_{num of eigenvectors}/
+```
+
+To create joint samples in 3D, first create two empty folders
+
+```
+data_generation/src/3D/img_{num of eigenvectors}/
+data_generation/src/3D/num_ev_{num of eigenvectors}/
 ```
 
 Then in REPL,

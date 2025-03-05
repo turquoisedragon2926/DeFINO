@@ -25,12 +25,13 @@ using Distributions
 using Zygote
 using Distributed
 using Interpolations
+using Polynomials
 
 # ------------------ #
 # Load Dataset       #
 # ------------------ #
 
-JLD2.@load "../../Diff_MultiPhysics/FNO-NF.jl/scripts/AspireK_128cube_firstdim_sampleid.jld2"
+JLD2.@load "../../../../Diff_MultiPhysics/FNO-NF.jl/scripts/AspireK_128cube_firstdim_sampleid.jld2"
 
 # ------------------ #
 # Helper Functions - #
@@ -100,23 +101,33 @@ d = (12.5f0,12.5f0,12.5f0)
 d1 = Float64.(d)
 dt = 80 #80;
 nt = 1;
+nsample = 2
+
+por = zeros(nsample, 128, 128, 128)
+K_resized = zeros(nsample, dx, dx, dx)
+ϕ_resized = zeros(nsample, dx, dx, dx)
 
 # permeability
-K_all = md * AspireK[:,:,:,:]
+K_all = md * AspireK[1:nsample,:,:,:]
+println("K_all size: ", size(K_all))
 
 # porosity
-ϕ = Ktoϕ.(AspireK[index,:,:,:])
-por = ϕ
+for j = 1:nsample
+    println("porosity conversion ", j)
+    por[j,:,:,:] = Ktoϕ.(AspireK[j,:,:,:])
+end
 
 # rescale
-K_resized = resize_array(K_all, new_size)
-ϕ_resized = resize_array(por, new_size)
-println("K_all size: ", size(K_all))
+for k = 1:nsample
+    println("rescaling ", k)
+    K_resized[k, :, :, :] = resize_array(K_all[k, :, :, :], n)
+    ϕ_resized[k, :, :, :] = resize_array(por[k, :, :, :], n)
+end
 
 # Define JutulModel
 top_layer = 70
 h = (top_layer-1) * 1.0 * d[end]  
-model = jutulModel(n, d1, vec(padϕ(ϕ_resized)), K1to3(K_resized; kvoverkh=0.36), h, true)
+model = jutulModel(n, d1, vec(padϕ(ϕ_resized[1,:,:,:])), K1to3(K_resized[1,:,:,:]; kvoverkh=0.36), h, true)
 
 ## simulation time steppings
 tstep = dt * ones(1) #in days
@@ -126,22 +137,24 @@ tot_time = sum(tstep)
 inj_loc_idx = (1, 28 , 28)
 inj_loc = inj_loc_idx .* d
 irate = 0.03f0
-q = jutulSource(irate, [inj_loc])
+ϕ_pad(idx) = vec(padϕ(ϕ_resized[idx, :, :, :]))
+q = jutulVWell(0.03, (Float64(inj_loc[1]), Float64(inj_loc[2]));
+    startz = Float64(inj_loc[3]), endz = Float64(inj_loc[3] + 2.0))
+# q = jutulSource(irate, [inj_loc])
 S = jutulModeling(model, tstep)
 
-figure()
-imshow(reshape(BroadK_rescaled[1, :, :], n[1], n[end])', cmap="viridis")
-scatter(inj_loc_idx[1], inj_loc_idx[3], color="red")
-colorbar(fraction=0.04)
-title("Permeability Model")
-savefig("Downsampled_Perm.png")
-close("all")
+# figure()
+# imshow(reshape(K_all[1, :, :], n[1], n[end])', cmap="viridis")
+# scatter(inj_loc_idx[1], inj_loc_idx[3], color="red")
+# colorbar(fraction=0.04)
+# title("Permeability Model")
+# savefig("Downsampled_Perm.png")
+# close("all")
 
 # ------------------ #
 # Setting for FIM    #
 # ------------------ #
 
-nsample = 25
 nev = 8  # Number of eigenvalues and eigenvectors to compute
 μ = 0.0   # Mean of the noise
 σ = 1.0   # Standard deviation of the noise
@@ -200,24 +213,26 @@ end
     return noise_vectors
 end
 
-for i = 2:nsample
+for i = 1:nsample
     Base.flush(Base.stdout)
 
-    Ks = zeros(n[1], n[end], nsample)
-    eigvec_save = zeros(n[1], n[end], nev, 8)
-    one_Jvs = zeros(n[1]*n[end], nev, 8)
-    conc = zeros(n[1], n[end], 1)
+    Ks = zeros(n[1], n[2], n[end], nsample)
+    eigvec_save = zeros(n[1], n[2], n[end], nev, 8)
+    one_Jvs = zeros(n[1]*n[2]*n[end], nev, 8)
+    conc = zeros(n[1], n[2], n[end], 1)
 
     println("sample $(i)")
-    K = K_all[i, :, :]
+    K = K_resized[i, :, :, :]
+    println(size(K))
 
     # 0. update model
-    model = jutulModel(n, d, vec(ϕ), K1to3(K; kvoverkh=0.36), h, true)
+    cur_por = ϕ_pad(i)
+    model = jutulModel(n, d1, cur_por, K1to3(K; kvoverkh=0.36), h, true)
     S = jutulModeling(model, tstep)
 
     # 1. compute forward: input = K
     mesh = CartesianMesh(model)
-    logTrans(x) = log.(KtoTrans(mesh, K1to3(x)))
+    logTrans(x) = log.(KtoTrans(mesh, K1to3(x; kvoverkh=0.36)))
     state00 = jutulSimpleState(model)
     state0 = state00.state  # 7 fields
     states = []
@@ -225,7 +240,7 @@ for i = 2:nsample
     # Repeat for 5 time steps
     for time_step in 1:5
         println("Sample $(i) time step $(time_step)")
-        state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1)[1]
+        state(x) = S(logTrans(x), cur_por, q; state0=state0, info_level=1)[1]
         state_sat(x) = Saturations(state(x)[:state])
 
         cur_state = state(K)
@@ -234,20 +249,22 @@ for i = 2:nsample
         cur_state_sat = Saturations(cur_state[:state])
 
         figure()
-        imshow(reshape(cur_state_sat, n[1], n[end])', cmap="viridis")
+        imshow(reshape(cur_state_sat, n[1], n[2], n[end])[:, 50, :]', cmap="cet_rainbow4")
         colorbar(fraction=0.04)
         title("Saturation at time step=$(time_step)")
-        savefig("img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
+        savefig("3D/img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
         close("all")
 
         push!(states, cur_state)
 
-        # ------------ #
-        # Compute FIM  #
-        # ------------ #
+        # ------------------- #
+        # Compute FIM / RSVD  #
+        # ------------------- #
+
         dll = zeros(n[1]*n[end], nev)
         noise_vectors = @time generate_orthogonal_masked_noise(cur_state_sat, size(cur_state_sat), nev)
 
+        # --- Form the projected matrix B = Qᵀ * J --- #
         gradient_results = pmap(j -> begin
             noise = noise_vectors[j]
             compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
@@ -259,10 +276,21 @@ for i = 2:nsample
 
         dll .= hcat(gradient_results...)
         println("size dll", size(dll))
+    
+        # --- Compute the SVD of the small matrix B = dll ---
+        svdB = svd(dll)
+        U_B = svdB.U[:, 1:nev]      # Keep only the first k columns.
+        S_vals = svdB.S[1:nev]
+        Vt = svdB.Vt[1:nev, :]
+    
+        # --- Approximate the left singular vectors of J ---
+        # The approximate left singular vectors are given by Q * U_B.
+        # What is the difference between U_B..?
+        U_approx = noise_vectors * U_B
 
-        @time U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
-        println("size U_svd: ", size(U_svd), " S_svd: ", size(S_svd), " VT_svd: ", size(VT_svd))
-        eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[end], nev)
+        # @time U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
+        println("size U_svd: ", size(U_B), " S_svd: ", size(S_vals), " VT_svd: ", size(VT))
+        eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[2], n[end], nev)
 
         if i == 2
             figure()
@@ -271,7 +299,7 @@ for i = 2:nsample
             ylabel("Singular Value")
             title("Singular Value Decay at time step = $(time_step)")
             grid(true)
-            savefig("img_$(nev)/Sample_$(i)_SingularValue_$(time_step).png")
+            savefig("3D/img_$(nev)/Sample_$(i)_SingularValue_$(time_step).png")
             close("all")
 
             for j in 1:nev
@@ -279,7 +307,7 @@ for i = 2:nsample
                 imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Left Singular Vector $(j) at time step = $(time_step)")
-                filename = "img_$(nev)/Sample_$(i)_U_svd_$(time_step)_$(j).png"
+                filename = "3D/img_$(nev)/Sample_$(i)_U_svd_$(time_step)_$(j).png"
                 savefig(filename)
                 close("all")
             end
@@ -296,7 +324,7 @@ for i = 2:nsample
                 imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Jacobian Vector Products with LSV $(j) at t = $(time_step)")
-                filename = "img_$(nev)/Sample_$(i)_vjp_$(time_step)_$(j).png"
+                filename = "3D/img_$(nev)/Sample_$(i)_vjp_$(time_step)_$(j).png"
                 savefig(filename)
                 close("all")
             end
@@ -316,9 +344,9 @@ for i = 2:nsample
 
         state0 = deepcopy(state0_temp)
     end
-    save_object("num_ev_$(nev)/FIM_eigvec_sample_$(i).jld2", eigvec_save)
-    save_object("num_ev_$(nev)/FIM_vjp_sample_$(i).jld2", one_Jvs)
-    save_object("num_ev_$(nev)/states_sample_$(i).jld2", states)
+    save_object("3D/num_ev_$(nev)/FIM_eigvec_sample_$(i).jld2", eigvec_save)
+    save_object("3D/num_ev_$(nev)/FIM_vjp_sample_$(i).jld2", one_Jvs)
+    save_object("3D/num_ev_$(nev)/states_sample_$(i).jld2", states)
 
     # Clean up after each sample
     eigvec_save = nothing

@@ -146,7 +146,7 @@ end
     return noise_vectors
 end
 
-for i = 14:nsample
+for i = 26:nsample
     Base.flush(Base.stdout)
 
     Ks = zeros(n[1], n[end], nsample)
