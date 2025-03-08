@@ -64,22 +64,22 @@ h = (top_layer-1) * 1.0 * d[end]
 model = jutulModel(n, d, vec(ϕ), K1to3(K_all[1,:,:]; kvoverkh=0.36), h, true)
 
 ## simulation time steppings
-tstep = 150 * ones(1) #in days
+tstep = 365 * ones(1) #in days
 tot_time = sum(tstep)
 
 ## injection & production
 inj_loc_idx = (130, 1 , 205)
 inj_loc = inj_loc_idx .* d
-irate = 6e-3
+irate = 7e-3
 q = jutulSource(irate, [inj_loc])
 S = jutulModeling(model, tstep)
 
 figure()
-imshow(reshape(BroadK_rescaled[1, :, :], n[1], n[end])', cmap="viridis")
+imshow(reshape(BroadK_rescaled[15, :, :], n[1], n[end])', cmap="viridis")
 scatter(inj_loc_idx[1], inj_loc_idx[3], color="red")
 colorbar(fraction=0.04)
 title("Permeability Model")
-savefig("Downsampled_Perm.png")
+savefig("Downsampled_Perm_15.png")
 close("all")
 
 # ------------------ #
@@ -146,7 +146,7 @@ end
     return noise_vectors
 end
 
-for i = 26:nsample
+for i = 15:nsample
     Base.flush(Base.stdout)
 
     Ks = zeros(n[1], n[end], nsample)
@@ -210,7 +210,7 @@ for i = 26:nsample
         println("size U_svd: ", size(U_svd), " S_svd: ", size(S_svd), " VT_svd: ", size(VT_svd))
         eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[end], nev)
 
-        if i == 14
+        if i == 15
             figure()
             semilogy(S_svd, "o-")
             xlabel("Index")
@@ -222,7 +222,7 @@ for i = 26:nsample
 
             for j in 1:nev
                 figure()
-                imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="managua", norm=mcolors.CenteredNorm(0))
+                imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Left Singular Vector $(j) at time step = $(time_step)")
                 filename = "img_$(nev)/Sample_$(i)_U_svd_$(time_step)_$(j).png"
@@ -236,10 +236,10 @@ for i = 26:nsample
         Jv_matrix = hcat(Jv_results...)
         println("Jv_matrix size: ", size(Jv_matrix))
 
-        if i == 14
+        if i == 15
             for j in 1:nev
                 figure()
-                imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="berlin", norm=mcolors.CenteredNorm(0))
+                imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Jacobian Vector Products with LSV $(j) at t = $(time_step)")
                 filename = "img_$(nev)/Sample_$(i)_vjp_$(time_step)_$(j).png"

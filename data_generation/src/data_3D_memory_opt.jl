@@ -249,7 +249,7 @@ for i = 1:nsample
         cur_state_sat = Saturations(cur_state[:state])
 
         figure()
-        imshow(reshape(cur_state_sat, n[1], n[2], n[end])[:, 50, :]', cmap="cet_rainbow4")
+        imshow(reshape(cur_state_sat, n[1], n[2], n[end])[:, inj_loc_idx[2], :]', cmap="viridis")
         colorbar(fraction=0.04)
         title("Saturation at time step=$(time_step)")
         savefig("3D/img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
@@ -261,7 +261,7 @@ for i = 1:nsample
         # Compute FIM / RSVD  #
         # ------------------- #
 
-        dll = zeros(n[1]*n[end], nev)
+        dll = zeros(n[1]*n[2]*n[end], nev)
         noise_vectors = @time generate_orthogonal_masked_noise(cur_state_sat, size(cur_state_sat), nev)
 
         # --- Form the projected matrix B = Qᵀ * J --- #
@@ -271,26 +271,28 @@ for i = 1:nsample
         end, 1:nev)
      
         # Free noise_vectors now that they’re used
-        noise_vectors = nothing
+        # noise_vectors = nothing
         GC.gc()
 
         dll .= hcat(gradient_results...)
-        println("size dll", size(dll))
     
         # --- Compute the SVD of the small matrix B = dll ---
         svdB = svd(dll)
         U_B = svdB.U[:, 1:nev]      # Keep only the first k columns.
         S_vals = svdB.S[1:nev]
         Vt = svdB.Vt[1:nev, :]
+        # size U_svd: (27000, 8) S_svd: (8,) VT_svd: (8, 8)
+        println("size U_svd: ", size(svdB.U), size(U_B), " S_svd: ", size(S_vals), " VT_svd: ", size(Vt))
     
         # --- Approximate the left singular vectors of J ---
         # The approximate left singular vectors are given by Q * U_B.
         # What is the difference between U_B..?
-        U_approx = noise_vectors * U_B
+        Q_matrix = hcat(vec.(noise_vectors)...) # (27000, nev)
+        println("size of noise_vectors ", size(noise_vectors), size(Q_matrix))
+        U_approx = Q_matrix * U_B'
 
         # @time U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
-        println("size U_svd: ", size(U_B), " S_svd: ", size(S_vals), " VT_svd: ", size(VT))
-        eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[2], n[end], nev)
+        eigvec_save[:, :, :, :, time_step] = reshape(U_approx, n[1], n[2], n[end], nev)
 
         if i == 2
             figure()
