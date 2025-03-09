@@ -255,7 +255,7 @@ for i = 1:nsample
         savefig("3D/img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
         close("all")
 
-        push!(states, cur_state)
+        push!(states, cur_state_sat)
 
         # ------------------- #
         # Compute FIM / RSVD  #

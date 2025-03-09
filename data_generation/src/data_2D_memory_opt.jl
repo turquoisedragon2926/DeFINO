@@ -1,4 +1,8 @@
-## A 2D example
+##
+## This file is for computing Saturation, 
+## eigenvector of FIM and vJp for 2D Permeability.
+##
+
 using Pkg; Pkg.activate(".")
 
 nthreads = try
@@ -146,7 +150,7 @@ end
     return noise_vectors
 end
 
-for i = 15:nsample
+for i = 36:nsample
     Base.flush(Base.stdout)
 
     Ks = zeros(n[1], n[end], nsample)
@@ -186,7 +190,7 @@ for i = 15:nsample
         savefig("img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
         close("all")
 
-        push!(states, cur_state)
+        push!(states, cur_state_sat)
 
         # ------------ #
         # Compute FIM  #

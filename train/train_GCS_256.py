@@ -28,33 +28,8 @@ from torch.utils.data import Dataset, DataLoader, TensorDataset
 from modulus.models.fno import FNO
 from modulus.models.mlp.fully_connected import FullyConnected
 
-class Timer:
-    def __init__(self):
-        self.elapsed_times = []
-
-    def __enter__(self):
-        self.start_time = time.time()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.end_time = time.time()
-        self.elapsed_time = self.end_time - self.start_time
-        self.elapsed_times.append(self.elapsed_time)
-        return False
-
 
 ### Dataset ###
-class GCSDataset(torch.utils.data.Dataset):
-    def __init__(self, data):
-        self.data = data
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        return self.data[idx]
-
-
 class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, x, y):
         self.x = x
@@ -65,57 +40,8 @@ class CustomDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         return self.x[idx], self.y[idx]
-    
-
-### Auxiliary Function ###
-def save_dataset_to_csv(dataset, prefix):
-    k_data = []
-    
-    for k in dataset:
-        k_data.append(k)
-    
-    k_df = pd.DataFrame(k_data)
-    k_df.to_csv(f'{prefix}', index=False)
-    print(f"Saved {prefix} dataset to CSV files")
-    return
-
-def load_dataset_from_csv(prefix, nx, ny):
-    df = pd.read_csv(f'{prefix}')
-
-    print(f'df Length: {len(df)}')
-    print(f'df Shape: {df.shape}')
-    
-    data = [torch.tensor(row.values).reshape(nx, ny) for _, row in df.iterrows()]
-    
-    return data
-
 
 ### Compute Metric ###
-def plot_results(true1, pred1, path):
-    plt.figure(figsize=(15, 5))
-    plt.rcParams.update({'font.size': 16})
-
-    plt.subplot(1, 3, 1)
-    plt.imshow(true1.cpu().numpy(), cmap='Blues')
-    plt.colorbar(fraction=0.045, pad=0.06)
-    plt.title('True Saturation')
-
-    plt.subplot(1, 3, 2)
-    plt.imshow(pred1.cpu().numpy(), cmap='Blues')
-    plt.colorbar(fraction=0.045, pad=0.06)
-    plt.title('Predicted Saturation')
-
-    # Set colorbar to be centered at 0 for error map
-    plt.subplot(1, 3, 3)
-    error1 = true1.cpu().numpy() - pred1.cpu().numpy()
-    vmin, vmax = 0.0, max(abs(error1.min()), abs(error1.max()))
-    plt.imshow(np.abs(error1), cmap='inferno', vmin=vmin, vmax=vmax)
-    plt.colorbar(fraction=0.045, pad=0.06)
-    plt.title('Error')
-
-    plt.savefig(path, dpi=150, bbox_inches='tight')
-    plt.close()
-
 def plot_single(true1, path, cmap='Blues'):
     plt.figure(figsize=(10, 10))
     plt.rcParams.update({'font.size': 16})
@@ -168,6 +94,19 @@ def plot_multiple_abs(figures, path, cmap='Blues'):
     plt.savefig(path, dpi=150, bbox_inches='tight')
     plt.close()
 
+def plot_multiple_abs_sat(figures, path, cmap='jet'):
+    fig, axes = plt.subplots(1, 5, figsize=(20, 4))  # Create 2 rows and 4 columns
+    plt.rcParams.update({'font.size': 16})
+
+    for i, (true1, ax) in enumerate(zip(figures, axes.flat)):  # Flatten axes to loop through them
+        im = ax.imshow(true1, cmap=cmap)
+        ax.set_title(f'Time step {i+1}')
+        fig.colorbar(im, ax=ax, fraction=0.045, pad=0.04)
+
+    plt.tight_layout()  # Adjust layout to prevent overlap
+    plt.savefig(path, dpi=150, bbox_inches='tight')
+    plt.close()
+
 def plot_loss_checkpoint(epoch, loss_type, mse_diff, test_diff, jac_diff_list=None):
     # Create loss plot
     print("Create loss plot")
@@ -195,7 +134,6 @@ def plot_loss_checkpoint(epoch, loss_type, mse_diff, test_diff, jac_diff_list=No
     plt.savefig(path, dpi=150, bbox_inches="tight")
     return
 
-
 ### Train ###
 def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, rolling, test_x):
     
@@ -206,9 +144,9 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
     # Define FNO3D
     model = FNO(
         in_channels=1,
-        out_channels=8,
-        decoder_layer_size=128,
-        num_fno_layers=5,
+        out_channels=1,
+        decoder_layer_size=128, #64
+        num_fno_layers=5, #3
         num_fno_modes=[2, 15, 15],
         padding=3,
         dimension=3,
@@ -227,12 +165,11 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
 
     # Create vjp_batch
     True_j = torch.tensor(True_j).float()
-    True_j = True_j.reshape(-1, dataloader.batch_size, 5, args.num_vec, args.nx, args.ny)
+    True_j = True_j.reshape(-1, dataloader.batch_size, args.num_timestep, args.num_vec, args.nx, args.ny)
     print("True J Before", True_j.shape, "After True J", True_j.shape) #([7, 100, 8, 64, 64]) -> ([idx, batchsize, 8, 64, 64])
     vec = torch.tensor(vec)
-    print("vec", vec.shape)
-    vec_batch = vec.reshape(-1, dataloader.batch_size, 5, args.num_vec, args.nx, args.ny)
-    print("vec", vec_batch.shape)
+    vec_batch = vec.reshape(-1, dataloader.batch_size, args.num_timestep, args.num_vec, args.nx, args.ny)
+    print("vec", vec_batch.shape) # [5, 2, 5, 8, 256, 256]
     vec_batch = vec_batch.cuda().float()
 
 
@@ -264,36 +201,45 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
                     plot_multiple_abs(abs(output[0]-Y[0]).squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/diff_sat_{epoch}.png", "magma")
                     plot_multiple_abs(abs(output[1]-Y[1]).squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/diff_sat2_{epoch}.png", "magma")
             else:
-            # GM
-                print("idx for vjp and v: ", idx)
+            # Regularization Term
+                print("Batch: ", idx)
                 # 1. update vjp and eigenvector
                 target_vjp = True_j[idx].cuda()
-                target_vjp = target_vjp.unsqueeze(1)  # Shape becomes [5, 1, 8, 15, 64, 64]
-                target_vjp = target_vjp.permute(0, 1, 3, 2, 4, 5) # shape [5, 1, 15, 8, 64, 64]
-                cur_vec_batch = vec_batch[idx] # 50 x 8 x 3 x 64 x 64
+                target_vjp = target_vjp.unsqueeze(1)
+                target_vjp = target_vjp.permute(0, 1, 3, 2, 4, 5) # [2, 1, 8, 5, 256, 256]
+                cur_vec_batch = vec_batch[idx] # eigenvectors for vJp | [2, 5, 8, 256, 256]
+                cur_vec_batch = cur_vec_batch.permute(0, 2, 1, 3, 4) # [2, 8, 5, 256, 256]
                 
-                # 2. compute MSE and GM loss term
-                output, vjp_func = torch.func.vjp(model, X[:, :, 0].unsqueeze(dim=1))
-                output = output.permute(0, 2, 1, 3, 4)
+                # 2. compute MSE and Regularization term
+                output, vjp_func = torch.func.vjp(model, X) # pass only single permeability field, thus, size is [2, 1, 1, 256, 256]
+                output = output.permute(0, 2, 1, 3, 4) # both output and Y shape is [2, 1, 5, 256, 256]
                 loss = criterion(output.squeeze(), Y.squeeze()) / torch.norm(Y)
-                vjp_out_list = []
+                # vjp_out_list = []
+                vjp_out = torch.empty((args.batch_size, args.num_vec, 1, args.num_timestep, args.nx, args.ny),
+                       device=X.device, dtype=X.dtype)
                 for e in range(args.num_vec):
-                    print("Compute regularization term ", e)
-                    vjp_out_onevec = vjp_func(cur_vec_batch[:, :, e].unsqueeze(2))[0] # -> learned vjp
-                    vjp_out_list.append(vjp_out_onevec)
-                    vjp_out = torch.stack(vjp_out_list, dim=1)
-                plot_multiple(vjp_out[0, : ,0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/learned_vjp_1st_sample.png", "seismic")
+                    # bases now has shape [batch_size, 1, time, 256,256]
+                    print("Computing vjp: ", e)
+                    bases = cur_vec_batch[:, e].unsqueeze(1)
+                    vjp_out[:, e] = vjp_func(bases)[0].detach()
+                target_vjp, vjp_out = target_vjp.squeeze(), vjp_out.squeeze()
     
-                if (epoch == 1) and (idx == 0):
-                    plot_multiple(X[0,0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/K_{epoch}.png")
-                    plot_multiple_abs(Y[0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/true_sat_{epoch}.png")
-                    plot_multiple(cur_vec_batch[0, :, 0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/true_eigvec_{epoch}.png", cmap)
-                    plot_multiple(target_vjp[0, :, 0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/true_vjp_{epoch}.png", cmap)
+                if (epoch == 0) and (idx == 0):
+                    # X.shape: [2, 1, 5, 256, 256])
+                    # Y.shape: [2, 1, 5, 256, 256])
+                    # cur_vec_batch.shape: [2, 8, 5, 256, 256])
+                    # target_vjp.shape: [2, 1, 8, 5, 256, 256])
+                    plot_single(X[0, 0, 0].detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/K.png", "viridis")
+                    plot_multiple_abs_sat(Y[0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/true_sat.png")
+                    plot_multiple(cur_vec_batch[0, :, 0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/true_eigvec_timestep_1.png", "seismic")
+                    plot_multiple(target_vjp[0, :, 0].detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/true_vjp_timestep_1.png", "seismic")
                 if (epoch % 10 == 0) and (idx == 0):
-                    plot_multiple_abs(output[0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/learned_sat_{epoch}.png")
-                    plot_multiple(vjp_out[0, :, 0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/learned_vjp_{epoch}.png", "seismic")
-                    plot_multiple_abs(abs(output[0]-Y[0]).squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/diff_sat_{epoch}.png", "magma")
-                    plot_multiple_abs(abs(target_vjp[0, :, 0]-vjp_out[0, :, 0]).squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/diff_vjp_{epoch}.png", "magma")
+                    # output.shape: [2, 5, 1, 256, 256]
+                    # vjp_out.shape: [2, 8, 5, 256, 256]
+                    plot_multiple_abs_sat(output[0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/learned_sat_{epoch}.png")
+                    plot_multiple(vjp_out.squeeze()[0,:, 0].detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/learned_vjp_{epoch}.png", "seismic")
+                    plot_multiple_abs_sat(abs(output[0].squeeze()-Y[0].squeeze()).detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/diff_sat_{epoch}.png", "magma")
+                    plot_multiple_abs(abs(target_vjp[0, :, 0]-vjp_out[0, :, 0]).detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/JAC/diff_vjp_{epoch}_timestep_1.png", "magma")
 
                 jac_diff = criterion(target_vjp, vjp_out)
                 jac_misfit += jac_diff.detach().cpu().numpy()
@@ -319,6 +265,7 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
             for X_test, Y_test in test_dataloader:
                 X_test = X_test.unsqueeze(1)
                 Y_test = Y_test.unsqueeze(1)
+                print("Test", X_test.shape, Y_test.shape)
                 X_test, Y_test = X_test.cuda().float(), Y_test.cuda().float()
                 output = model(X_test)
                 test_loss = criterion(output.squeeze(), Y_test) / torch.norm(Y_test) # relative error
@@ -340,9 +287,11 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
             with torch.no_grad():
                 Y_pred = model(X_test)
             plot_path = f"../plot/GCS_vec_{args.num_vec}/FNO_GCS_lowest_vec_{args.num_vec}_{loss_type}_True.png"
-            plot_multiple_abs(Y_test[0].squeeze().cpu(), plot_path)
-            plot_multiple_abs(Y_pred[0].squeeze().detach().cpu(), f"../plot/GCS_vec_{args.num_vec}/FNO_GCS_lowest_{loss_type}_Pred.png")
-            plot_multiple_abs(abs(Y_pred[0]-Y_test[0]).squeeze().detach().cpu(), f"../plot/GCS_vec_{args.num_vec}/FNO_GCS_lowest_{loss_type}_diff.png", "magma")
+            plot_multiple_abs_sat(Y_test[0].squeeze().cpu(), plot_path)
+
+            print("X_test", X_test.shape, "Y_test", Y_test.shape, "Y_pred", Y_pred.shape)
+            plot_multiple_abs_sat(Y_pred[0].squeeze().detach().cpu(), f"../plot/GCS_vec_{args.num_vec}/FNO_GCS_lowest_{loss_type}_pred.png")
+            plot_multiple_abs_sat(abs(Y_pred[0]-Y_test[0]).squeeze().detach().cpu(), f"../plot/GCS_vec_{args.num_vec}/FNO_GCS_lowest_{loss_type}_diff.png", "magma")
                 
 
         if full_loss < args.threshold:
@@ -351,7 +300,9 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
 
     print("Finished Computing")
 
-    # Save the model
+    # ----------------------
+    # Save model & loss:
+    # ----------------------
     torch.save(model.state_dict(), f"../test_result/GCS_vec_{args.num_vec}_{loss_type}_full.pth")
     # Save the elapsed times
     with open(f'../test_result/Time/GCS_{args.loss_type}_{args.nx}_{args.num_train}.csv', 'w', newline='') as csvfile:
@@ -373,7 +324,9 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
                 writer.writerows(enumerate(data, 1))
     print("Losses saved to CSV files.")
 
-    # Create loss plot
+    # ----------------------
+    # Create Loss Plot:
+    # ----------------------
     print("Create loss plot")
     mse_diff = np.asarray(mse_diff)
     jac_diff_list = np.asarray(jac_diff_list)
@@ -386,7 +339,6 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
     test_diff = test_diff[start_epoch:]
     jac_diff_list = jac_diff_list[start_epoch:]  # Only if JAC is relevant
     epochs = np.arange(len(mse_diff))
-
     fig, ax = plt.subplots()
     ax.plot(epochs, mse_diff, "P-", lw=1.0, ms=4.0, color="coral", label="MSE (Train)")
     ax.plot(epochs, test_diff, "P-", lw=1.0, ms=4.0, color="blue", label="MSE (Test)")
@@ -428,16 +380,20 @@ if __name__ == "__main__":
     parser.add_argument("--num_train", type=int, default=10)
     parser.add_argument("--num_test", type=int, default=10)
     parser.add_argument("--threshold", type=float, default=1e-8)
-    parser.add_argument("--batch_size", type=int, default=5)
+    parser.add_argument("--batch_size", type=int, default=2)
     parser.add_argument("--loss_type", default="JAC", choices=["MSE", "JAC", "Sobolev", "Dissipative"])
+    parser.add_argument("--reg_param", type=float, default=20.0) # 0.1 -> 2
+    # Set arguments (dataset)
+    parser.add_argument("--num_vec", type=int, default=8)
+    parser.add_argument("--num_timestep", type=int, default=5)
     parser.add_argument("--nx", type=int, default=256)
     parser.add_argument("--ny", type=int, default=256)
-    parser.add_argument("--reg_param", type=float, default=20.0) # 0.1 -> 2
-    parser.add_argument("--num_vec", type=int, default=8)
 
     args = parser.parse_args()
 
-    # Save initial settings
+    # ------------------------
+    # Set the initial setting:
+    # ------------------------
     start_time = datetime.datetime.now().strftime("%m_%d_%H_%M_%S")
     out_file = os.path.join("../test_result/", f"GCS_{start_time}.txt")
     logging.basicConfig(filename=out_file, filemode="w", level=logging.INFO, format="%(message)s")
@@ -450,112 +406,74 @@ if __name__ == "__main__":
         ["#0000FF", "white", "#FF0000"]
     )
 
+    set_y, set_vjp, set_eig, set_rolling = [], [], [], []
+    num_sample = args.num_train + args.num_test
 
-    set_x, set_y, set_vjp, set_eig, set_rolling = [], [], [], [], []
+    # ----------------------
+    # Load the K:
+    # ----------------------
+    with h5py.File("../data_generation/src/rescaled_200_fields.h5", "r") as f:
+        K = f["K_subset"][:]  # This is a NumPy array
+        print("Original shape of K:", K.shape)  # Should print (256, 512, 2000)
 
-    with h5py.File('../../../Diff_MultiPhysics/FNO-NF.jl/scripts/wise_perm_models_2000_new.jld2', 'r') as f:
-        print("Keys: %s" % f.keys()) # Keys: <KeysViewHDF5 ['BroadK', 'K', 'NarrowK', 'phi']>
-
-        K = f['BroadK'][:]
-        # phi = f['phi'][:]
-        print(len(K), len(K[0]), len(K[0][0])) # 256 x 512 x 2000
-        set_x.append(K)
-        set_x = set_x[0]
-
-    ####
-    # Transposing and Rescaling K. Should I multiply md?
-    ####
+    # ----------------------
+    # Transpose K:
+    # ----------------------
+    set_x = np.transpose(K, (2, 0, 1))
+    plt.imshow(set_x[0], cmap="viridis")
+    plt.colorbar()
+    plt.savefig("Downsampled_py.png", dpi=150, bbox_inches='tight')
+    plt.close()
 
 
-    def resize_array(A, new_size):
-        # A: original array
-        # new_size: tuple of desired shape, e.g., (A.shape[0], dx, dy)
-        
-        # Determine the original grid (using 1-indexed coordinates as in the Julia code)
-        orig_dims = A.shape
-        grid = [np.linspace(1, d, d) for d in orig_dims]
-        
-        # Build the new coordinate grid for each dimension
-        new_grid = [np.linspace(1, d, n) for d, n in zip(orig_dims, new_size)]
-        
-        # Create a meshgrid for the new coordinates.
-        # Using 'ij' indexing so that the order of dimensions is preserved.
-        mesh = np.meshgrid(*new_grid, indexing='ij')
-        
-        # Stack the grid arrays to get a (..., ndim) array of evaluation points.
-        pts = np.stack(mesh, axis=-1)
-        
-        # Evaluate the interpolation using linear interpolation.
-        # bounds_error=False with fill_value=None allows extrapolation.
-        new_A = interpn(grid, A, pts, method='linear', bounds_error=False, fill_value=None)
-        
-        return new_A
-
-    BroadK_rescaled = resize_array(BroadK, (BroadK.shape[0], 256, 256))
-
-    # Read the each file s_idx: sample index
-    for s_idx in range(1, args.num_train+args.num_test+1):
-        with h5py.File(f'../data_generation/src/num_ev_{args.num_vec}/states_sample_{s_idx}.jld2', 'r') as f1, \
+    # ----------------------
+    # Load Everything:
+    # ----------------------
+    for s_idx in range(1, num_sample+1):
+        with h5py.File(f'../data_generation/src/num_ev_{args.num_vec}_stateonly/states_sample_{s_idx}.jld2', 'r') as f1, \
             h5py.File(f'../data_generation/src/num_ev_{args.num_vec}/FIM_eigvec_sample_{s_idx}.jld2', 'r') as f2, \
             h5py.File(f'../data_generation/src/num_ev_{args.num_vec}/FIM_vjp_sample_{s_idx}.jld2', 'r') as f3:
 
+            # print("f1 Keys: %s" % f1.keys()) #<KeysViewHDF5 ['single_stored_object']>
             states_refs = f1['single_stored_object'][:]  # Load the array of object references
             states_tensors = []
+
             # Loop over the references, dereference them, and convert to tensors
             for ref in states_refs:
-                # Dereference the object reference
                 state_data = f1[ref][:]
-                
-                # Convert the dereferenced data to a PyTorch tensor
                 state_tensor = torch.tensor(state_data)
                 states_tensors.append(state_tensor)
             
-            eigvec = f2['single_stored_object'][:] # len: 8 x 20 x 64 x 64
-            vjp = f3['single_stored_object'][:] # len: 8 x 20 x 4096
-            # print(torch.tensor(eigvec).shape, torch.tensor(vjp).shape)
+            eigvec = f2['single_stored_object'][:]
+            vjp = f3['single_stored_object'][:]
+            cur_vjp = torch.tensor(vjp).reshape(torch.tensor(vjp).shape[0], args.num_vec, args.nx, args.ny)[:, :args.num_vec]
+            cur_eig = torch.tensor(eigvec).reshape(torch.tensor(eigvec).shape[0], args.num_vec, args.nx, args.ny)[:, :args.num_vec]
 
-            # set_y.append(S) 
-            set_y.append(torch.stack(states_tensors).reshape(8, 64, 64))
-            set_vjp.append(torch.tensor(vjp).reshape(8, 20, 64, 64)[:, :args.num_vec]) 
-            set_eig.append(torch.tensor(eigvec).reshape(8, 20, 64, 64)[:, :args.num_vec])
+            set_y.append(torch.stack(states_tensors).reshape(args.num_timestep, args.nx, args.ny))
+            set_vjp.append(cur_vjp[:args.num_timestep]) 
+            set_eig.append(cur_eig[:args.num_timestep])
 
+            print("shape", torch.tensor(set_vjp[s_idx-1]).shape)
 
-            # Plot every 200th element
-            if s_idx % 200 == 0:
-                plot_single_abs(set_x[s_idx-1], f"../plot/GCS_channel_vec_{args.num_vec}/data_permeability:{s_idx}.png")
-                print(len(set_y), s_idx)
-                plot_multiple_abs(set_y[s_idx-1], f"../plot/GCS_channel_vec_{args.num_vec}/data_saturation:{s_idx}.png")
+            if s_idx == 1:
+                plot_single_abs(set_x[s_idx-1], f"../plot/GCS_vec_{args.num_vec}/K_{s_idx}.png", "viridis")
+                plot_multiple_abs(set_y[s_idx-1], f"../plot/GCS_vec_{args.num_vec}/S_{s_idx}.png")
                 if args.loss_type == "JAC":
-                    plot_multiple(torch.tensor(set_vjp[s_idx-1][0]), f"../plot/GCS_channel_vec_{args.num_vec}/data_vjp:{s_idx}.png", "seismic")
-                    # plot_multiple(set_eig[s_idx-1], f"../plot/GCS_channel_vec_{args.num_vec}/data_eigvec:{s_idx}.png")
+                    plot_multiple(torch.tensor(set_eig[s_idx-1][0]), f"../plot/GCS_vec_{args.num_vec}/eig_{s_idx}_timestep_1.png", "seismic")
 
-
-    print("len or:", len(set_x), len(set_x[0]), len(set_y), len(set_vjp))
     train_x_raw = torch.tensor(set_x[:args.num_train])
     train_y_raw = torch.stack(set_y[:args.num_train])
     test_x_raw = torch.tensor(set_x[args.num_train:args.num_train+args.num_test])
     test_y_raw = torch.stack(set_y[args.num_train:args.num_train+args.num_test])
 
     train_x_raw = train_x_raw.unsqueeze(1)  # Now tensor is [25, 1, 64, 64]
-    train_x_raw = train_x_raw.repeat(1, 8, 1, 1)  # Now tensor is [25, 8, 64, 64]
-
+    train_x_raw = train_x_raw.repeat(1, args.num_timestep, 1, 1)  # Now tensor is [25, 8, 64, 64]
     test_x_raw = test_x_raw.unsqueeze(1)  # Now tensor is [25, 1, 64, 64]
-    test_x_raw = test_x_raw.repeat(1, 8, 1, 1)  # Now tensor is [25, 8, 64, 64]
+    test_x_raw = test_x_raw.repeat(1, args.num_timestep, 1, 1)  # Now tensor is [25, 8, 64, 64]
 
-    # normalize train_y_raw and train_vjp and set_eig
-    def normalize_to_range(x, new_min=-1.0, new_max=1.0):
-        """
-        Normalize the tensor x to the range [new_min, new_max]
-        """
-        old_min = torch.min(x)
-        old_max = torch.max(x)
-        x_norm = (new_max - new_min) * (x - old_min) / (old_max - old_min) + new_min
-        return x_norm
-
-    train_vjp = torch.stack(set_vjp[:args.num_train]).reshape(-1, 64, 64)
+    train_vjp = torch.stack(set_vjp[:args.num_train]).reshape(-1, args.nx, args.ny)
     print("vjp norm", torch.norm(train_vjp), torch.max(train_vjp))
     train_vjp = train_vjp / torch.norm(train_vjp)
-    # train_vjp = train_vjp / (10**13)
 
     set_eig = torch.stack(set_eig[:args.num_train])
     print("len: ", len(train_vjp), len(set_eig))
