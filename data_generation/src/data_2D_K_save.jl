@@ -101,11 +101,11 @@ S = jutulModeling(model, tstep)
 # Gen Saturation     #
 # ------------------ #
 
-nsample = 200
+nsample = 40
 nev = 8  # Number of eigenvalues and eigenvectors to compute
 nt = length(tstep)
 
-for i = 1:nsample
+for i = 21:nsample
     Base.flush(Base.stdout)
 
     println("sample $(i)")

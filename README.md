@@ -2,6 +2,14 @@
 
 This repository is for implementing Derivative-based Fisher-score Informed Neural Operator.
 
+## Setup
+
+To create conda environment from the terminal,
+
+```
+conda env create -f environment.yml
+```
+
 ## Generating Joint Samples
 
 To create joint samples in 2D, first create two empty folders
