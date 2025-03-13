@@ -68,13 +68,13 @@ h = (top_layer-1) * 1.0 * d[end]
 model = jutulModel(n, d, vec(ϕ), K1to3(K_all[1,:,:]; kvoverkh=0.36), h, true)
 
 ## simulation time steppings
-tstep = 365 * ones(1) #in days
+tstep = 1000 * ones(1) #in days 1000
 tot_time = sum(tstep)
 
 ## injection & production
 inj_loc_idx = (130, 1 , 205)
 inj_loc = inj_loc_idx .* d
-irate = 7e-3
+irate = 9e-3 #7e-3 previously
 q = jutulSource(irate, [inj_loc])
 S = jutulModeling(model, tstep)
 
@@ -91,7 +91,7 @@ close("all")
 # ------------------ #
 
 nsample = 200
-nev = 8  # Number of eigenvalues and eigenvectors to compute
+nev = 40  # Number of eigenvalues and eigenvectors to compute
 nt = length(tstep)
 μ = 0.0   # Mean of the noise
 σ = 1.0   # Standard deviation of the noise
@@ -133,24 +133,7 @@ end
     end
 end
 
-@everywhere function generate_masked_noise_column(mask, n)
-    v = zeros(n)
-    v[mask] .= randn(sum(mask))
-    v ./= maximum(abs.(v))
-    return v
-end
-
-@everywhere function generate_orthogonal_masked_noise(saturation, shape::Tuple, nev::Int)
-    mask = (saturation .!= 0)
-    n = prod(shape)
-    noise_columns = pmap(_ -> generate_masked_noise_column(mask, n), 1:nev)
-    R = hcat(noise_columns...)
-    Q = @time qr(R).Q
-    noise_vectors = [reshape(Q[:, j], shape) for j in 1:nev]
-    return noise_vectors
-end
-
-for i = 41:nsample
+for i = 1:nsample
     Base.flush(Base.stdout)
 
     Ks = zeros(n[1], n[end], nsample)
@@ -196,7 +179,11 @@ for i = 41:nsample
         # Compute FIM  #
         # ------------ #
         dll = zeros(n[1]*n[end], nev)
-        noise_vectors = @time generate_orthogonal_masked_noise(cur_state_sat, size(cur_state_sat), nev)
+        # noise_vectors = @time generate_orthogonal_masked_noise(cur_state_sat, size(cur_state_sat), nev)
+        noise_vectors = rand(dist, (n[1]*n[end], nev))
+        # noise_vectors = ones(n[1]*n[end], nev)
+        num_zeros = sum(noise_vectors .== 0) 
+        println("number of zeros in noise vectors", num_zeros )
 
         gradient_results = pmap(j -> begin
             noise = noise_vectors[j]
@@ -212,21 +199,31 @@ for i = 41:nsample
 
         @time U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
         println("size U_svd: ", size(U_svd), " S_svd: ", size(S_svd), " VT_svd: ", size(VT_svd))
+        num_zeros_U = sum(U_svd .== 0) 
+        println("Number of zeros from probing vector:", num_zeros_U) #0
         eigvec_save[:, :, :, time_step] = reshape(U_svd, n[1], n[end], nev)
 
-        if i == 15
+        if i == 1
             figure()
             semilogy(S_svd, "o-")
             xlabel("Index")
             ylabel("Singular Value")
             title("Singular Value Decay at time step = $(time_step)")
             grid(true)
-            savefig("img_$(nev)/Sample_$(i)_SingularValue_$(time_step).png")
+            savefig("img_$(nev)/Sample_$(i)_SingularValue_$(time_step)_64.png")
             close("all")
 
             for j in 1:nev
                 figure()
-                imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
+                vmin, vmax = extrema(U_svd[:, j])
+                linthresh = 0.1 * maximum(abs, U_svd[:, j])
+                println("vmin, vmax", vmin, vmax)
+                if abs(vmin) > abs(vmax)
+                    norm_U = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh, vmin=vmin*0.8, vmax=vmax)
+                else
+                    norm_U = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh, vmin=vmin, vmax=vmax*0.8)
+                end
+                imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="seismic", norm=norm_U)#norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Left Singular Vector $(j) at time step = $(time_step)")
                 filename = "img_$(nev)/Sample_$(i)_U_svd_$(time_step)_$(j).png"
@@ -239,11 +236,21 @@ for i = 41:nsample
         Jv_results = @time pmap(e -> compute_pullback(Fp, U_svd[:, e]), 1:nev)
         Jv_matrix = hcat(Jv_results...)
         println("Jv_matrix size: ", size(Jv_matrix))
+        num_zeros_Jv = sum(Jv_matrix .== 0)
+        println("Number of 0s in Jv", num_zeros_Jv) #0
 
-        if i == 15
+        if i == 1
             for j in 1:nev
                 figure()
-                imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
+                vmin_J, vmax_J = extrema(Jv_matrix[:, j])
+                println("vmin, vmax", vmin_J, vmax_J)
+                linthresh_J = 0.1 * maximum(abs, Jv_matrix[:, j])
+                if abs(vmin_J) > abs(vmax_J)
+                    norm_J = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh_J, vmin=vmin_J*0.8, vmax=vmax_J)
+                else
+                    norm_J = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh_J, vmin=vmin_J, vmax=vmax_J*0.8)
+                end
+                imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="seismic", norm=norm_J)#norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Jacobian Vector Products with LSV $(j) at t = $(time_step)")
                 filename = "img_$(nev)/Sample_$(i)_vjp_$(time_step)_$(j).png"

@@ -22,6 +22,7 @@ from functorch import vjp, vmap
 from torch.utils.data import Subset
 import matplotlib.colors as colors
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import SymLogNorm
 from scipy.interpolate import interpn
 
 from torch.utils.data import Dataset, DataLoader, TensorDataset
@@ -42,58 +43,131 @@ class CustomDataset(torch.utils.data.Dataset):
         return self.x[idx], self.y[idx]
 
 ### Compute Metric ###
+# def plot_results_two(true1, pred1, path, true_name='True Saturation', pred_name='Predicted Saturation'):
+#     plt.figure(figsize=(10, 5))
+#     plt.rcParams.update({'font.size': 13})
+
+#     plt.subplot(1, 2, 1)
+#     t1 = true1.squeeze().cpu().numpy()
+#     t1_range = max(abs(t1.min()), abs(t1.max()))
+#     plt.imshow(t1, cmap='seismic', vmin=-t1_range, vmax=t1_range)
+#     # plt.imshow(true1.cpu().numpy(), cmap='seismic', vmin=0.0, vmax=1.0)
+#     plt.colorbar(fraction=0.045, pad=0.06)
+#     plt.title(true_name)
+
+#     plt.subplot(1, 2, 2)
+#     p1 = pred1.squeeze().cpu().numpy()
+#     p1_range = max(abs(p1.min()), abs(p1.max()))
+#     plt.imshow(p1, cmap='seismic', vmin=-p1_range, vmax=p1_range)
+#     # plt.imshow(pred1.cpu().numpy(), cmap='seismic', vmin=0.0, vmax=1.0)
+#     plt.colorbar(fraction=0.045, pad=0.06)
+#     plt.title(pred_name)
+
+#     plt.savefig(path, dpi=150, bbox_inches='tight')
+#     plt.close()
+
 def plot_results_two(true1, pred1, path, true_name='True Saturation', pred_name='Predicted Saturation'):
     plt.figure(figsize=(10, 5))
     plt.rcParams.update({'font.size': 13})
 
+    # Plot the true saturation
     plt.subplot(1, 2, 1)
     t1 = true1.squeeze().cpu().numpy()
-    t1_range = max(abs(t1.min()), abs(t1.max()))
-    plt.imshow(t1, cmap='seismic', vmin=-t1_range, vmax=t1_range)
-    # plt.imshow(true1.cpu().numpy(), cmap='seismic', vmin=0.0, vmax=1.0)
+    t1_range = max(abs(t1.min()), abs(t1.max()))*0.8
+    norm_t1 = SymLogNorm(linthresh=0.1 * t1_range, vmin=-t1_range, vmax=t1_range)
+    plt.imshow(t1, cmap='seismic', norm=norm_t1)
     plt.colorbar(fraction=0.045, pad=0.06)
     plt.title(true_name)
 
+    # Plot the predicted saturation
     plt.subplot(1, 2, 2)
     p1 = pred1.squeeze().cpu().numpy()
-    p1_range = max(abs(p1.min()), abs(p1.max()))
-    plt.imshow(p1, cmap='seismic', vmin=-p1_range, vmax=p1_range)
-    # plt.imshow(pred1.cpu().numpy(), cmap='seismic', vmin=0.0, vmax=1.0)
+    p1_range = max(abs(p1.min()), abs(p1.max()))*0.8
+    norm_p1 = SymLogNorm(linthresh=0.1 * p1_range, vmin=-p1_range, vmax=p1_range)
+    plt.imshow(p1, cmap='seismic', norm=norm_p1)
     plt.colorbar(fraction=0.045, pad=0.06)
     plt.title(pred_name)
 
     plt.savefig(path, dpi=150, bbox_inches='tight')
     plt.close()
 
+# def plot_results(true1, pred1, path, true_name='True Saturation', pred_name='Predicted Saturation', cmap_name='jet', seismic=False):
+#     plt.figure(figsize=(15, 5))
+#     plt.rcParams.update({'font.size': 16})
+
+#     plt.subplot(1, 3, 1)
+#     if seismic == True:
+#         t1 = true1.squeeze().cpu().numpy()
+#         t1_range = max(abs(t1.min()), abs(t1.max()))
+#         plt.imshow(t1, cmap=cmap_name, vmin=-t1_range, vmax=t1_range)
+#     else:
+#         plt.imshow(true1.squeeze().cpu().numpy(), cmap=cmap_name, vmin=0.0, vmax=1.0)
+#     plt.colorbar(fraction=0.045, pad=0.06)
+#     plt.title(true_name)
+
+#     plt.subplot(1, 3, 2)
+#     if seismic == True:
+#         p1 = pred1.squeeze().cpu().numpy()
+#         p1_range = max(abs(p1.min()), abs(p1.max()))
+#         plt.imshow(t1, cmap=cmap_name, vmin=-p1_range, vmax=p1_range)
+#     else:
+#         plt.imshow(pred1.squeeze().cpu().numpy(), cmap=cmap_name, vmin=0.0, vmax=1.0)
+#     plt.colorbar(fraction=0.045, pad=0.06)
+#     plt.title(pred_name)
+
+#     # Set colorbar to be centered at 0 for error map
+#     plt.subplot(1, 3, 3)
+#     error1 = true1.squeeze().cpu().numpy() - pred1.squeeze().cpu().numpy()
+#     vmin, vmax = 0.0, max(abs(error1.min()), abs(error1.max()))
+#     plt.imshow(np.abs(error1), cmap='magma', vmin=vmin, vmax=vmax)
+#     plt.colorbar(fraction=0.045, pad=0.06)
+#     plt.title('Error')
+
+#     plt.savefig(path, dpi=150, bbox_inches='tight')
+#     plt.close()
+
 def plot_results(true1, pred1, path, true_name='True Saturation', pred_name='Predicted Saturation', cmap_name='jet', seismic=False):
-    plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(19, 5))
     plt.rcParams.update({'font.size': 16})
 
+    # Plot the true data
     plt.subplot(1, 3, 1)
-    if seismic == True:
+    if seismic:
         t1 = true1.squeeze().cpu().numpy()
         t1_range = max(abs(t1.min()), abs(t1.max()))
-        plt.imshow(t1, cmap=cmap_name, vmin=-t1_range, vmax=t1_range)
+        linthresh = 0.1 * t1_range  # Linear threshold for symmetric log scaling
+        plt.imshow(t1, cmap=cmap_name, norm=SymLogNorm(linthresh=linthresh, vmin=-t1_range, vmax=t1_range))
     else:
         plt.imshow(true1.squeeze().cpu().numpy(), cmap=cmap_name, vmin=0.0, vmax=1.0)
     plt.colorbar(fraction=0.045, pad=0.06)
     plt.title(true_name)
 
+    # Plot the predicted data
     plt.subplot(1, 3, 2)
-    if seismic == True:
+    if seismic:
         p1 = pred1.squeeze().cpu().numpy()
         p1_range = max(abs(p1.min()), abs(p1.max()))
-        plt.imshow(t1, cmap=cmap_name, vmin=-p1_range, vmax=p1_range)
+        linthresh = 0.1 * p1_range  # Linear threshold for symmetric log scaling
+        plt.imshow(p1, cmap=cmap_name, norm=SymLogNorm(linthresh=linthresh, vmin=-p1_range, vmax=p1_range))
     else:
         plt.imshow(pred1.squeeze().cpu().numpy(), cmap=cmap_name, vmin=0.0, vmax=1.0)
     plt.colorbar(fraction=0.045, pad=0.06)
     plt.title(pred_name)
 
-    # Set colorbar to be centered at 0 for error map
+    # Plot the error map (always linear, using absolute error)
     plt.subplot(1, 3, 3)
     error1 = true1.squeeze().cpu().numpy() - pred1.squeeze().cpu().numpy()
-    vmin, vmax = 0.0, max(abs(error1.min()), abs(error1.max()))
-    plt.imshow(np.abs(error1), cmap='magma', vmin=vmin, vmax=vmax)
+    error_abs = np.abs(error1)
+    vmax_error = error_abs.max()
+
+    if seismic:
+        # Set a linear threshold as 10% of the maximum error
+        linthresh_error = 0.1 * vmax_error  
+        norm_error = SymLogNorm(linthresh=linthresh_error, vmin=0.0, vmax=vmax_error)
+        plt.imshow(error_abs, cmap='magma', norm=norm_error)
+    else:
+        plt.imshow(error_abs, cmap='magma', vmin=0.0, vmax=vmax_error)
+
     plt.colorbar(fraction=0.045, pad=0.06)
     plt.title('Error')
 
@@ -183,14 +257,15 @@ def plot_loss_checkpoint(epoch, loss_type, mse_diff, test_diff, jac_diff_list=No
     epochs = np.arange(len(mse_diff))
 
     fig, ax = plt.subplots()
-    ax.plot(epochs, mse_diff, "P-", lw=1.0, ms=4.0, color="coral", label="MSE (Train)")
-    ax.plot(epochs, test_diff, "P-", lw=1.0, ms=4.0, color="blue", label="MSE (Test)")
+    ax.semilogy(epochs, mse_diff, "P-", lw=1.0, ms=4.0, color="coral", label="MSE (Train)")
+    ax.semilogy(epochs, test_diff, "P-", lw=1.0, ms=4.0, color="blue", label="MSE (Test)")
     if args.loss_type == "JAC":
-        ax.plot(epochs, jac_diff_list, "P-", lw=1.0, color="slateblue", ms=4.0, label=r"$\|J^Tv - \hat{J}^Tv\|$")
-    ax.set_xlabel("Epochs",fontsize=24)
+        ax.semilogy(epochs, jac_diff_list, "P-", lw=1.0, ms=4.0, color="slateblue", label=r"$\|J^Tv - \hat{J}^Tv\|$")
+    ax.set_xlabel("Epochs", fontsize=24)
     ax.set_ylabel("Loss", fontsize=24)
     ax.legend()
     plt.savefig(path, dpi=150, bbox_inches="tight")
+
     return
 
 ### Train ###
@@ -207,7 +282,7 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
         out_channels=1,
         decoder_layer_size=64,
         num_fno_layers=3,
-        num_fno_modes=[2, 72, 72],
+        num_fno_modes=[2, 15, 15],
         padding=3,
         dimension=3,
         latent_channels=64
@@ -215,7 +290,7 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
 
     optimizer = torch.optim.AdamW(
         model.parameters(),
-        lr=1e-3,
+        lr=7e-4,
         weight_decay=1e-5
     )
 
@@ -247,30 +322,49 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
             X, Y = X.cuda().float(), Y.cuda().float()
             X = X.unsqueeze(1)
             Y = Y.unsqueeze(1)
+
+            print("Batch: ", idx)
+            # 1. update vjp and eigenvector
+            target_vjp = True_j[idx].cuda()
+            target_vjp = target_vjp.unsqueeze(1)
+            target_vjp = target_vjp.permute(0, 1, 3, 2, 4, 5) # [2, 1, 8, 5, 256, 256]
+            cur_vec_batch = vec_batch[idx] # eigenvectors for vJp | [2, 5, 8, 256, 256]
+            cur_vec_batch = cur_vec_batch.permute(0, 2, 1, 3, 4) # [2, 8, 5, 256, 256]
             
             # MSE 
             if args.loss_type == "MSE":
-                print("Batch: ", idx)
                 output = model(X)
                 loss = criterion(output.squeeze(), Y.squeeze()) / torch.norm(Y)
                 if (epoch % 5 == 0) and (idx == 0):
                     plot_single(X[0, 0, 0].detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/K0.png", "viridis")
-                    # plot_single(X[1, 0, 0].detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/K1.png", "viridis")
                     plot_multiple_abs_sat(Y[0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/true_sat.png")
                     plot_multiple_abs_sat(output[0].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/learned_sat_{epoch}.png")
-                    # plot_multiple_abs_sat(output[1].squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/learned_sat2_{epoch}.png")
                     plot_multiple_abs_sat(abs(output[0]-Y[0]).squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/diff_sat_{epoch}.png", "magma")
-                    # plot_multiple_abs_sat(abs(output[1]-Y[1]).squeeze().detach().cpu().numpy(), f"../plot/GCS_vec_{args.num_vec}/training/MSE/diff_sat2_{epoch}.png", "magma")
+                if (epoch % 10 == 0) and (idx == 0):
+                    output, vjp_func = torch.func.vjp(model, X) # pass only single permeability field, thus, size is [2, 1, 1, 256, 256]
+                    output = output.permute(0, 2, 1, 3, 4) # both output and Y shape is [2, 1, 5, 256, 256]
+                    loss = criterion(output.squeeze(), Y.squeeze()) / torch.norm(Y)
+                    vjp_out = torch.empty((args.batch_size, args.num_vec, 1, args.num_timestep, args.nx, args.ny),
+                        device=X.device, dtype=X.dtype)
+                    
+                    for e in range(args.num_vec):
+                        # bases now has shape [batch_size, 1, time, 256,256]
+                        print("Computing vjp: ", e)
+                        bases = cur_vec_batch[:, e].unsqueeze(1)
+                        vjp_out[:, e] = vjp_func(bases)[0]
+                    target_vjp, vjp_out = target_vjp.squeeze(), vjp_out.squeeze()
+
+                    for t in range(args.num_timestep):
+                        plot_results(Y[0, 0, t].detach().cpu(),  
+                                    output[0, t, 0].detach().cpu(),  
+                                    f"../plot/GCS_vec_{args.num_vec}/training/MSE/sat_timestep_{t+1}_epoch_{epoch}.png")
+
+                        plot_results(target_vjp[0, t].detach().cpu(), 
+                                    vjp_out[0, t].detach().cpu(),
+                                    f"../plot/GCS_vec_{args.num_vec}/training/MSE/vjp_timestep_{t+1}_epoch_{epoch}.png", r"True $v^TJ$", r"Predicted $v^TJ$", "seismic", seismic=True)
+
             else:
             # Regularization Term
-                print("Batch: ", idx)
-                # 1. update vjp and eigenvector
-                target_vjp = True_j[idx].cuda()
-                target_vjp = target_vjp.unsqueeze(1)
-                target_vjp = target_vjp.permute(0, 1, 3, 2, 4, 5) # [2, 1, 8, 5, 256, 256]
-                cur_vec_batch = vec_batch[idx] # eigenvectors for vJp | [2, 5, 8, 256, 256]
-                cur_vec_batch = cur_vec_batch.permute(0, 2, 1, 3, 4) # [2, 8, 5, 256, 256]
-                
                 # 2. compute MSE and Regularization term
                 output, vjp_func = torch.func.vjp(model, X) # pass only single permeability field, thus, size is [2, 1, 1, 256, 256]
                 output = output.permute(0, 2, 1, 3, 4) # both output and Y shape is [2, 1, 5, 256, 256]
@@ -282,7 +376,7 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
                     # bases now has shape [batch_size, 1, time, 256,256]
                     print("Computing vjp: ", e)
                     bases = cur_vec_batch[:, e].unsqueeze(1)
-                    vjp_out[:, e] = vjp_func(bases)[0].detach()
+                    vjp_out[:, e] = vjp_func(bases)[0]
                 target_vjp, vjp_out = target_vjp.squeeze(), vjp_out.squeeze()
     
                 if (epoch == 0) and (idx == 0):
@@ -308,7 +402,7 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
                                     vjp_out[0, t].detach().cpu(),
                                     f"../plot/GCS_vec_{args.num_vec}/training/JAC/vjp_timestep_{t+1}_epoch_{epoch}.png", r"True $v^TJ$", r"Predicted $v^TJ$", "seismic", seismic=True)
 
-                jac_diff = criterion(target_vjp, vjp_out)
+                jac_diff = criterion(target_vjp, vjp_out) / (torch.norm(target_vjp) + 1e-8)
                 jac_misfit += jac_diff.detach().cpu().numpy()
                 loss += jac_diff * args.reg_param
 
@@ -406,11 +500,11 @@ def main(logger, args, loss_type, dataloader, test_dataloader, True_j, vec, roll
     jac_diff_list = jac_diff_list[start_epoch:]  # Only if JAC is relevant
     epochs = np.arange(len(mse_diff))
     fig, ax = plt.subplots()
-    ax.plot(epochs, mse_diff, "P-", lw=1.0, ms=4.0, color="coral", label="MSE (Train)")
-    ax.plot(epochs, test_diff, "P-", lw=1.0, ms=4.0, color="blue", label="MSE (Test)")
+    ax.semilogy(epochs, mse_diff, "P-", lw=1.0, ms=4.0, color="coral", label="MSE (Train)")
+    ax.semilogy(epochs, test_diff, "P-", lw=1.0, ms=4.0, color="blue", label="MSE (Test)")
 
     if args.loss_type == "JAC":
-        ax.plot(epochs, jac_diff_list, "P-", lw=1.0, color="slateblue", ms=4.0, label=r"$\|J^Tv - \hat{J}^Tv\|$")
+        ax.semilogy(epochs, jac_diff_list, "P-", lw=1.0, ms=4.0, color="slateblue", label=r"$\|J^Tv - \hat{J}^Tv\|$")
 
     ax.set_xlabel("Epochs", fontsize=24)
     ax.set_ylabel("Loss", fontsize=24)
@@ -441,15 +535,15 @@ if __name__ == "__main__":
     # Set arguments (hyperparameters)
     parser = argparse.ArgumentParser()
     parser.add_argument("--weight_decay", type=float, default=5e-4)
-    parser.add_argument("--num_epoch", type=int, default=100)
-    parser.add_argument("--num_train", type=int, default=16)
-    parser.add_argument("--num_test", type=int, default=4)
+    parser.add_argument("--num_epoch", type=int, default=200)
+    parser.add_argument("--num_train", type=int, default=35)
+    parser.add_argument("--num_test", type=int, default=5)
     parser.add_argument("--threshold", type=float, default=1e-8)
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--loss_type", default="JAC", choices=["MSE", "JAC", "Sobolev", "Dissipative"])
-    parser.add_argument("--reg_param", type=float, default=0.08) # 0.1 -> 2
+    parser.add_argument("--reg_param", type=float, default=200.0) # 0.1 -> 2
     # Set arguments (dataset)
-    parser.add_argument("--num_vec", type=int, default=4)
+    parser.add_argument("--num_vec", type=int, default=8)
     parser.add_argument("--num_timestep", type=int, default=5)
     parser.add_argument("--nx", type=int, default=256)
     parser.add_argument("--ny", type=int, default=256)
@@ -542,9 +636,9 @@ if __name__ == "__main__":
 
     train_vjp = torch.stack(set_vjp[:args.num_train]).reshape(-1, args.nx, args.ny)
     print("vjp norm", torch.norm(train_vjp), torch.max(train_vjp))
-    # train_vjp = train_vjp / torch.norm(train_vjp)
-    scale_factor = 1e13
-    train_vjp = train_vjp / scale_factor
+    train_vjp = train_vjp / torch.norm(train_vjp)
+    # scale_factor = 1e12
+    # train_vjp = train_vjp / scale_factor
 
 
     set_eig = torch.stack(set_eig[:args.num_train])
