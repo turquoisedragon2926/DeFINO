@@ -17,6 +17,7 @@ BLAS.set_num_threads(nthreads)
 println("Number of threads:", Threads.nthreads())
 
 using JutulDarcyRules
+using Jutul
 using Random
 Random.seed!(2023)
 using PyPlot
@@ -61,8 +62,9 @@ K_all = md * BroadK_rescaled
 println("K_all size: ", size(K_all))
 
 # Define JutulModel
-phi_rescaled = resize_array(phi, (dx,dy))
-ϕ = phi_rescaled
+# phi_rescaled = resize_array(phi, (dx,dy))
+# ϕ = phi_rescaled
+ϕ = 0.25 * ones((dx, dy))
 top_layer = 70
 h = (top_layer-1) * 1.0 * d[end]  
 model = jutulModel(n, d, vec(ϕ), K1to3(K_all[1,:,:]; kvoverkh=0.36), h, true)
@@ -74,7 +76,7 @@ tot_time = sum(tstep)
 ## injection & production
 inj_loc_idx = (130, 1 , 205)
 inj_loc = inj_loc_idx .* d
-irate = 9e-3 #7e-3 previously
+irate = 9e-3 #, 7e-3 previously
 q = jutulSource(irate, [inj_loc])
 S = jutulModeling(model, tstep)
 
@@ -102,7 +104,7 @@ dist = Normal(μ, σ)
 # ---------------------- #
 
 if nprocs() == 1
-    addprocs(8, exeflags=["--threads=2"])
+    addprocs(8, exeflags=["--threads=8"])
 end
 println("num procs: ", nprocs())
 
@@ -114,7 +116,7 @@ println("num procs: ", nprocs())
         println("col_U size: ", size(col_U))
         return @time Fp(col_U)[1]
     catch e
-        println("Pullback computation failed: ", e)
+        println("Pullback computation failed: ")
         return zeros(length(col_U))  # Return zeros on failure
     finally
         GC.gc()  # Free memory on this worker after computation
@@ -133,7 +135,7 @@ end
     end
 end
 
-for i = 1:nsample
+for i = 10:nsample
     Base.flush(Base.stdout)
 
     Ks = zeros(n[1], n[end], nsample)
@@ -152,7 +154,7 @@ for i = 1:nsample
     mesh = CartesianMesh(model)
     logTrans(x) = log.(KtoTrans(mesh, K1to3(x)))
     state00 = jutulSimpleState(model)
-    state0 = state00.state  # 7 fields
+    state0 = state00.state  # 7 fields #setup_state(model)
     states = []
 
     # Repeat for 5 time steps
@@ -161,17 +163,19 @@ for i = 1:nsample
         state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1)[1]
         state_sat(x) = Saturations(state(x)[:state])
 
+        println("Forward")
         cur_state = state(K)
+        println("Backward")
         @time Fv, Fp = Zygote.pullback(state_sat, vec(K))  # v^TJ pullback
         state0_temp = deepcopy(cur_state[:state])
         cur_state_sat = Saturations(cur_state[:state])
 
-        figure()
-        imshow(reshape(cur_state_sat, n[1], n[end])', cmap="viridis")
-        colorbar(fraction=0.04)
-        title("Saturation at time step=$(time_step)")
-        savefig("img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
-        close("all")
+        # figure()
+        # imshow(reshape(cur_state_sat, n[1], n[end])', cmap="viridis")
+        # colorbar(fraction=0.04)
+        # title("Saturation at time step=$(time_step)")
+        # savefig("img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
+        # close("all")
 
         push!(states, cur_state_sat)
 
@@ -184,15 +188,17 @@ for i = 1:nsample
         # noise_vectors = ones(n[1]*n[end], nev)
         num_zeros = sum(noise_vectors .== 0) 
         println("number of zeros in noise vectors", num_zeros )
+        # noise = noise_vectors[:, 1]
+        # gradient_results = compute_pullback_with_noise(1, Fp, noise, cur_state_sat)
 
         gradient_results = pmap(j -> begin
-            noise = noise_vectors[j]
+            noise = noise_vectors[:, j]
             compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
         end, 1:nev)
      
         # Free noise_vectors now that they’re used
         noise_vectors = nothing
-        GC.gc()
+        # GC.gc()
 
         dll .= hcat(gradient_results...)
         println("size dll", size(dll))
