@@ -99,9 +99,9 @@ dx = 30
 n = (dx, dx, dx)
 d = (12.5f0,12.5f0,12.5f0)
 d1 = Float64.(d)
-dt = 80 #80;
+dt = 200 #365.25 #80;
 nt = 1;
-nsample = 2
+nsample = 1
 
 por = zeros(nsample, 128, 128, 128)
 K_resized = zeros(nsample, dx, dx, dx)
@@ -111,6 +111,12 @@ K_resized = zeros(nsample, dx, dx, dx)
 K_all = md * AspireK[1:nsample,:,:,:]
 println("K_all size: ", size(K_all))
 
+figure(figsize=(12,6))
+imshow(AspireK[70,:,:,4]',cmap="viridis")
+colorbar(label="[Km/s]",shrink=0.80)
+xlabel("X [m]")
+ylabel("Depth [m]")
+
 # porosity
 for j = 1:nsample
     println("porosity conversion ", j)
@@ -118,25 +124,39 @@ for j = 1:nsample
 end
 
 # rescale
-for k = 1:nsample
-    println("rescaling ", k)
-    K_resized[k, :, :, :] = resize_array(K_all[k, :, :, :], n)
-    ϕ_resized[k, :, :, :] = resize_array(por[k, :, :, :], n)
+if dx != 128
+    for k = 1:nsample
+        println("rescaling ", k)
+        K_resized[k, :, :, :] = resize_array(K_all[k, :, :, :], n)
+        ϕ_resized[k, :, :, :] = resize_array(por[k, :, :, :], n)
+    end
 end
 
 # Define JutulModel
-top_layer = 70
+top_layer = 30
 h = (top_layer-1) * 1.0 * d[end]  
 model = jutulModel(n, d1, vec(padϕ(ϕ_resized[1,:,:,:])), K1to3(K_resized[1,:,:,:]; kvoverkh=0.36), h, true)
 
 ## simulation time steppings
-tstep = dt * ones(1) #in days
+tstep = dt * ones(5) #in days
 tot_time = sum(tstep)
 
 ## injection & production
-inj_loc_idx = (1, 28 , 28)
+max_val, linear_idx = findmax(K_resized[1,5:(dx-5),5:(dx-5),1:(dx-10)])
+# Convert linear index to 3D (i,j,k) index
+max_index = CartesianIndices(K_resized[1,:,:,:])[linear_idx]
+println("Maximum value: ", max_val)
+println("Index of maximum value: ", max_index, linear_idx)
+
+inj_loc_idx = Tuple(max_index)
 inj_loc = inj_loc_idx .* d
-irate = 0.03f0
+# inj_loc = Tuple(max_index) .* d
+
+# m = 1
+# Kmax_loc = 90 + argmax(AspireK[70,60,90:110,m])-1
+# inj_loc = (70, 60, Kmax_loc) .* d
+
+irate = 0.03
 ϕ_pad(idx) = vec(padϕ(ϕ_resized[idx, :, :, :]))
 q = jutulVWell(0.03, (Float64(inj_loc[1]), Float64(inj_loc[2]));
     startz = Float64(inj_loc[3]), endz = Float64(inj_loc[3] + 2.0))
@@ -155,7 +175,7 @@ S = jutulModeling(model, tstep)
 # Setting for FIM    #
 # ------------------ #
 
-nev = 8  # Number of eigenvalues and eigenvectors to compute
+nev = 128  # Number of eigenvalues and eigenvectors to compute
 μ = 0.0   # Mean of the noise
 σ = 1.0   # Standard deviation of the noise
 dist = Normal(μ, σ)
@@ -165,7 +185,7 @@ dist = Normal(μ, σ)
 # ---------------------- #
 
 if nprocs() == 1
-    addprocs(8, exeflags=["--threads=2"])
+    addprocs(8, exeflags=["--threads=10"])
 end
 println("num procs: ", nprocs())
 
@@ -178,7 +198,7 @@ println("num procs: ", nprocs())
         return @time Fp(col_U)[1]
     catch e
         println("Pullback computation failed: ", e)
-        return zeros(length(col_U))  # Return zeros on failure
+        return nothing  # Return zeros on failure
     finally
         GC.gc()  # Free memory on this worker after computation
     end
@@ -190,7 +210,7 @@ end
         return @time Fp(noise)[1]
     catch e
         println("Pullback computation failed for perturbation $(j): ", e)
-        return zeros(length(cur_state_sat))
+        return nothing
     finally
         GC.gc()
     end
@@ -237,16 +257,27 @@ for i = 1:nsample
     state0 = state00.state  # 7 fields
     states = []
 
+    figure(figsize=(12,6))
+    imshow(K[:,inj_loc_idx[2],:]',cmap="viridis")
+    colorbar(label="[Km/s]",shrink=0.90)
+    xlabel("X [m]")
+    ylabel("Depth [m]")
+    scatter(inj_loc_idx[1]-1, inj_loc_idx[3]-1, color="red")
+    savefig("3D/img_$(nev)/perm.png")
+
+
     # Repeat for 5 time steps
     for time_step in 1:5
         println("Sample $(i) time step $(time_step)")
-        state(x) = S(logTrans(x), cur_por, q; state0=state0, info_level=1)[1]
-        state_sat(x) = Saturations(state(x)[:state])
+        state(x) = S(logTrans(x), cur_por, q; state0=state0, info_level=1).states[end]
+        state_sat(x) = Saturations(state(x))
 
+        println("Forward")
         cur_state = state(K)
+        println("Backward")
         @time Fv, Fp = Zygote.pullback(state_sat, vec(K))  # v^TJ pullback
-        state0_temp = deepcopy(cur_state[:state])
-        cur_state_sat = Saturations(cur_state[:state])
+        state0_temp = deepcopy(cur_state)
+        cur_state_sat = Saturations(cur_state)
 
         figure()
         imshow(reshape(cur_state_sat, n[1], n[2], n[end])[:, inj_loc_idx[2], :]', cmap="viridis")
@@ -263,21 +294,26 @@ for i = 1:nsample
 
         dll = zeros(n[1]*n[2]*n[end], nev)
         noise_vectors = @time generate_orthogonal_masked_noise(cur_state_sat, size(cur_state_sat), nev)
+        num_zeros = sum(noise_vectors .== 0) 
+        println("num_zeros", num_zeros)
+        # out_fp = Fp(noise_vectors[1])
 
         # --- Form the projected matrix B = Qᵀ * J --- #
+        cur_state_sat = nothing
         gradient_results = pmap(j -> begin
             noise = noise_vectors[j]
             compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
-        end, 1:nev)
+        end, 1:nev) # shape of noise_vectors: [nev , dx^3]
+
      
         # Free noise_vectors now that they’re used
-        # noise_vectors = nothing
-        GC.gc()
+        noise_vectors = nothing
 
         dll .= hcat(gradient_results...)
+        println("size dll", size(dll))
     
         # --- Compute the SVD of the small matrix B = dll ---
-        svdB = svd(dll)
+        @time svdB = svd(dll)
         U_B = svdB.U[:, 1:nev]      # Keep only the first k columns.
         S_vals = svdB.S[1:nev]
         Vt = svdB.Vt[1:nev, :]
@@ -285,18 +321,12 @@ for i = 1:nsample
         println("size U_svd: ", size(svdB.U), size(U_B), " S_svd: ", size(S_vals), " VT_svd: ", size(Vt))
     
         # --- Approximate the left singular vectors of J ---
-        # The approximate left singular vectors are given by Q * U_B.
-        # What is the difference between U_B..?
-        Q_matrix = hcat(vec.(noise_vectors)...) # (27000, nev)
-        println("size of noise_vectors ", size(noise_vectors), size(Q_matrix))
-        U_approx = Q_matrix * U_B'
-
         # @time U_svd, S_svd, VT_svd = LinearAlgebra.svd(dll)
-        eigvec_save[:, :, :, :, time_step] = reshape(U_approx, n[1], n[2], n[end], nev)
+        eigvec_save[:, :, :, :, time_step] = reshape(U_B, n[1], n[2], n[end], nev)
 
-        if i == 2
+        if i == 1
             figure()
-            semilogy(S_svd, "o-")
+            semilogy(S_vals, "o-")
             xlabel("Index")
             ylabel("Singular Value")
             title("Singular Value Decay at time step = $(time_step)")
@@ -306,7 +336,7 @@ for i = 1:nsample
 
             for j in 1:nev
                 figure()
-                imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
+                imshow(reshape(U_B[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Left Singular Vector $(j) at time step = $(time_step)")
                 filename = "3D/img_$(nev)/Sample_$(i)_U_svd_$(time_step)_$(j).png"
@@ -316,11 +346,11 @@ for i = 1:nsample
         end
 
         println("Compute vTJ")
-        Jv_results = @time pmap(e -> compute_pullback(Fp, U_svd[:, e]), 1:nev)
+        Jv_results = @time pmap(e -> compute_pullback(Fp, U_B[:, e]), 1:nev)
         Jv_matrix = hcat(Jv_results...)
         println("Jv_matrix size: ", size(Jv_matrix))
 
-        if i == 2
+        if i == 1
             for j in 1:nev
                 figure()
                 imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="seismic", norm=mcolors.CenteredNorm(0))

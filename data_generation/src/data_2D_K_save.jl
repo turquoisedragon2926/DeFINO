@@ -65,18 +65,18 @@ println("K_all size: ", size(K_all))
 # Gen Permeability   #
 # ------------------ #
 
-# # Save the fisrt 200 samples
-# K_subset = K_all[1:200, :, :]
-# h5write("rescaled_200_fields.h5", "K_subset", K_subset)
+# Save the fisrt 200 samples
+K_subset = K_all[1:200, :, :]
+h5write("rescaled_200_fields.h5", "K_subset", K_subset)
 
 
-# figure()
-# imshow(reshape(K_all[1, :, :], n[1], n[end])', cmap="viridis")
-# scatter(130, 205, color="red")
-# colorbar(fraction=0.04)
-# title("Permeability Model")
-# savefig("Downsampled_Perm_1_save.png")
-# close("all")
+figure()
+imshow(reshape(K_all[1, :, :], n[1], n[end])', cmap="viridis")
+scatter(130, 205, color="red")
+colorbar(fraction=0.04)
+title("Permeability Model")
+savefig("Downsampled_Perm_1_save.png")
+close("all")
 
 
 # Define JutulModel
@@ -99,50 +99,50 @@ S = jutulModeling(model, tstep)
 
 # ------------------ #
 # Gen Saturation     #
-# ------------------ #
+# # ------------------ #
 
-nsample = 40
-nev = 8  # Number of eigenvalues and eigenvectors to compute
-nt = length(tstep)
+# nsample = 40
+# nev = 8  # Number of eigenvalues and eigenvectors to compute
+# nt = length(tstep)
 
-for i = 21:nsample
-    Base.flush(Base.stdout)
+# for i = 21:nsample
+#     Base.flush(Base.stdout)
 
-    println("sample $(i)")
-    K = K_all[i, :, :]
+#     println("sample $(i)")
+#     K = K_all[i, :, :]
 
-    # 0. update model
-    model = jutulModel(n, d, vec(ϕ), K1to3(K; kvoverkh=0.36), h, true)
-    S = jutulModeling(model, tstep)
+#     # 0. update model
+#     model = jutulModel(n, d, vec(ϕ), K1to3(K; kvoverkh=0.36), h, true)
+#     S = jutulModeling(model, tstep)
 
-    # 1. compute forward: input = K
-    mesh = CartesianMesh(model)
-    logTrans(x) = log.(KtoTrans(mesh, K1to3(x)))
-    state00 = jutulSimpleState(model)
-    state0 = state00.state  # 7 fields
-    states = []
+#     # 1. compute forward: input = K
+#     mesh = CartesianMesh(model)
+#     logTrans(x) = log.(KtoTrans(mesh, K1to3(x)))
+#     state00 = jutulSimpleState(model)
+#     state0 = state00.state  # 7 fields
+#     states = []
 
-    # Repeat for 5 time steps
-    for time_step in 1:5
-        println("Sample $(i) time step $(time_step)")
-        state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1)[1]
-        state_sat(x) = Saturations(state(x)[:state])
+#     # Repeat for 5 time steps
+#     for time_step in 1:5
+#         println("Sample $(i) time step $(time_step)")
+#         state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1)[1]
+#         state_sat(x) = Saturations(state(x)[:state])
 
-        cur_state = state(K)
-        state0_temp = deepcopy(cur_state[:state])
-        cur_state_sat = Saturations(cur_state[:state])
+#         cur_state = state(K)
+#         state0_temp = deepcopy(cur_state[:state])
+#         cur_state_sat = Saturations(cur_state[:state])
 
-        figure()
-        imshow(reshape(cur_state_sat, n[1], n[end])', cmap="viridis")
-        colorbar(fraction=0.04)
-        title("Saturation at time step=$(time_step)")
-        savefig("img_$(nev)/Sample_$(i)_Saturation_$(time_step)_re.png")
-        close("all")
+#         figure()
+#         imshow(reshape(cur_state_sat, n[1], n[end])', cmap="viridis")
+#         colorbar(fraction=0.04)
+#         title("Saturation at time step=$(time_step)")
+#         savefig("img_$(nev)/Sample_$(i)_Saturation_$(time_step)_re.png")
+#         close("all")
+# 
+#         push!(states, cur_state_sat)
 
-        push!(states, cur_state_sat)
-
-        state0 = deepcopy(state0_temp)
-    end
-    save_object("num_ev_$(nev)_stateonly/states_sample_$(i).jld2", states)
-    GC.gc()
-end
+#         state0 = deepcopy(state0_temp)
+#     end
+#     save_object("num_ev_$(nev)_stateonly/states_sample_$(i).jld2", states)
+#     GC.gc()
+# end

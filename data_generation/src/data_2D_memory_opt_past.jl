@@ -17,7 +17,6 @@ BLAS.set_num_threads(nthreads)
 println("Number of threads:", Threads.nthreads())
 
 using JutulDarcyRules
-using Jutul
 using Random
 Random.seed!(2023)
 using PyPlot
@@ -70,13 +69,13 @@ h = (top_layer-1) * 1.0 * d[end]
 model = jutulModel(n, d, vec(ϕ), K1to3(K_all[1,:,:]; kvoverkh=0.36), h, true)
 
 ## simulation time steppings
-tstep = 200 * ones(5) #in days 1000
+tstep = 100 * ones(1) #in days 1000
 tot_time = sum(tstep)
 
 ## injection & production
 inj_loc_idx = (130, 1 , 205)
 inj_loc = inj_loc_idx .* d
-irate = 9e-3 #, 7e-3 previously
+irate = 9e-3 #7e-3 previously
 q = jutulSource(irate, [inj_loc])
 S = jutulModeling(model, tstep)
 
@@ -103,9 +102,9 @@ dist = Normal(μ, σ)
 # Generate Joint Samples #
 # ---------------------- #
 
-if nprocs() == 1
-    addprocs(8, exeflags=["--threads=10"])
-end
+# if nprocs() == 1
+#     addprocs(8, exeflags=["--threads=2"])
+# end
 println("num procs: ", nprocs())
 
 # Load packages on all workers
@@ -123,24 +122,36 @@ println("num procs: ", nprocs())
     end
 end
 
-@everywhere function compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
-    println("Perturbation $(j) processed on worker $(myid())")
+# @everywhere function compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
+#     println("Perturbation $(j) processed on worker $(myid())")
+#     println("Size of noise", size(noise))
+#     try
+#         return @time Fp(noise)[1]
+#     catch e
+#         println("Pullback computation failed for perturbation $(j): ")
+#         return zeros(length(cur_state_sat))
+#     finally
+#         GC.gc()
+#     end
+# end
+
+# Compute pullback for a given noise perturbation (used in gradient computation)
+function compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
+    println("Perturbation $j processed on worker $(myid()), noise size: ", size(noise))
     try
         return @time Fp(noise)[1]
     catch e
-        println("Pullback computation failed for perturbation $(j): ", e)
+        println("Pullback computation failed for perturbation $j: ")
         return zeros(length(cur_state_sat))
-    finally
-        GC.gc()
     end
 end
 
-for i = 17:nsample
+for i = 10:nsample
     Base.flush(Base.stdout)
 
     Ks = zeros(n[1], n[end], nsample)
-    eigvec_save = zeros(n[1], n[end], nev, 8)
-    one_Jvs = zeros(n[1]*n[end], nev, 8)
+    eigvec_save = zeros(n[1], n[end], nev, 5)
+    one_Jvs = zeros(n[1]*n[end], nev, 5)
     conc = zeros(n[1], n[end], 1)
 
     println("sample $(i)")
@@ -154,55 +165,65 @@ for i = 17:nsample
     mesh = CartesianMesh(model)
     logTrans(x) = log.(KtoTrans(mesh, K1to3(x)))
     state00 = jutulSimpleState(model)
-    state0 = state00.state  # 7 fields #setup_state(model)
-    list_states = []
+    state0 = state00.state  # 7 fields
+    states = []
 
     # Repeat for 5 time steps
     for time_step in 1:5
         println("Sample $(i) time step $(time_step)")
-        state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1).states[end]
-        state_sat(x) = Saturations(state(x))
-        # state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1).states[:]
-        # state_sat(x) = vcat(Saturations(s) for s in state(x))[end]
-        # state_sat(x) = vcat([Saturations(s) for s in state(x)])
-        # a = []
-        # for s in state(x)
-        #     push!(a, Saturations(s))
-        # end
-        # vcat(a...)
+        state(x) = S(logTrans(x), model.ϕ, q; state0=state0, info_level=1)[1]
+        state_sat(x) = Saturations(state(x)[:state])
 
-        println("Forward")
         cur_state = state(K)
 
-        println("Backward")
-        @time Fv, Fp = Zygote.pullback(state_sat, vec(K))  # v^TJ pullback
-        state0_temp = deepcopy(cur_state)
-        cur_state_sat = Saturations(cur_state)
+        @time cur_state_sat, Fp = Zygote.pullback(state_sat, vec(K))  # v^TJ pullback
+        state0_temp = copy(cur_state[:state])
+        cur_state_pressure = cur_state[:state][:Pressure]
 
-        figure()
-        imshow(reshape(cur_state_sat, n[1], n[end])', cmap="viridis")
-        colorbar(fraction=0.04)
-        title("Saturation at time step=$(time_step)")
-        savefig("img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
-        close("all")
+        # if i % 10 == 0
+        #     figure()
+        #     imshow(reshape(cur_state_sat, n[1], n[end])', cmap="viridis")
+        #     colorbar(fraction=0.04)
+        #     title("Saturation at time step=$(time_step)")
+        #     savefig("img_$(nev)/Sample_$(i)_Saturation_$(time_step).png")
+        #     close("all")
 
-        push!(list_states, cur_state_sat)
+        #     figure()
+        #     imshow(reshape(cur_state_pressure, n[1], n[end])', cmap="Reds")
+        #     colorbar(fraction=0.04)
+        #     title("Pressure at time step=$(time_step)")
+        #     savefig("img_$(nev)/Sample_$(i)_Pressure_$(time_step).png")
+        #     close("all")
+        # end
+
+        push!(states, cur_state_sat)
 
         # ------------ #
         # Compute FIM  #
         # ------------ #
         dll = zeros(n[1]*n[end], nev)
         # noise_vectors = @time generate_orthogonal_masked_noise(cur_state_sat, size(cur_state_sat), nev)
-        noise_vectors = rand(dist, (n[1]*n[end], nev)) # noise_vectors = ones(n[1]*n[end], nev)
+        noise_vectors = rand(dist, (n[1]*n[end], nev))
+        # noise_vectors = ones(n[1]*n[end], nev)
         num_zeros = sum(noise_vectors .== 0) 
         println("number of zeros in noise vectors", num_zeros )
-        cur_state_sat = nothing
-        gradient_results = pmap(j -> begin
-            noise = noise_vectors[:, j]
-            compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
-        end, 1:nev)
+
+        # gradient_results = pmap(j -> begin
+        #     noise = noise_vectors[:,j] # indexing ... [:,j]
+        #     compute_pullback_with_noise(j, Fp, noise, cur_state_sat)
+        # end, 1:nev)
+
+        # Use multi-threading for computing the gradient for each noise vector
+        gradient_results = Vector{Any}(undef, nev)
+        Threads.@threads for j in 1:nev
+            intermediate = compute_pullback_with_noise(j, Fp, noise_vectors[:, j], cur_state_sat)
+            println("size of intermediate", size(intermediate))
+            gradient_results[:,j] = intermediate
+        end
+        dll .= gradient_results
      
-        noise_vectors = nothing # Free noise_vectors now that they’re used
+        # Free noise_vectors now that they’re used
+        noise_vectors = nothing
 
         dll .= hcat(gradient_results...)
         println("size dll", size(dll))
@@ -225,14 +246,9 @@ for i = 17:nsample
 
             for j in 1:nev
                 figure()
-                vmin, vmax = extrema(U_svd[:, j])
-                linthresh = 0.1 * maximum(abs, U_svd[:, j])
-                println("vmin, vmax", vmin, vmax)
-                if abs(vmin) > abs(vmax)
-                    norm_U = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh, vmin=vmin*0.8, vmax=vmax)
-                else
-                    norm_U = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh, vmin=vmin, vmax=vmax*0.8)
-                end
+                maxabs_U = maximum(abs, U_svd[:, j])*0.8
+                linthresh = 0.1 * maxabs_U
+                norm_U = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh, vmin=-maxabs_U, vmax=maxabs_U)
                 imshow(reshape(U_svd[:, j], n[1], n[end])', cmap="seismic", norm=norm_U)#norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Left Singular Vector $(j) at time step = $(time_step)")
@@ -252,14 +268,9 @@ for i = 17:nsample
         if i == 1
             for j in 1:nev
                 figure()
-                vmin_J, vmax_J = extrema(Jv_matrix[:, j])
-                println("vmin, vmax", vmin_J, vmax_J)
-                linthresh_J = 0.1 * maximum(abs, Jv_matrix[:, j])
-                if abs(vmin_J) > abs(vmax_J)
-                    norm_J = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh_J, vmin=vmin_J*0.8, vmax=vmax_J)
-                else
-                    norm_J = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh_J, vmin=vmin_J, vmax=vmax_J*0.8)
-                end
+                maxabs = maximum(abs, Jv_matrix[:, j])*0.8
+                linthresh_J = 0.1 * maxabs
+                norm_J = PyPlot.matplotlib.colors.SymLogNorm(linthresh=linthresh_J, vmin=-maxabs, vmax=maxabs)
                 imshow(reshape(Jv_matrix[:, j], n[1], n[end])', cmap="seismic", norm=norm_J)#norm=mcolors.CenteredNorm(0))
                 colorbar(fraction=0.04)
                 title("Jacobian Vector Products with LSV $(j) at t = $(time_step)")
@@ -285,7 +296,7 @@ for i = 17:nsample
     end
     save_object("num_ev_$(nev)/FIM_eigvec_sample_$(i).jld2", eigvec_save)
     save_object("num_ev_$(nev)/FIM_vjp_sample_$(i).jld2", one_Jvs)
-    save_object("num_ev_$(nev)/states_sample_$(i).jld2", list_states)
+    save_object("num_ev_$(nev)/states_sample_$(i).jld2", states)
 
     # Clean up after each sample
     eigvec_save = nothing
