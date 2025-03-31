@@ -294,7 +294,7 @@ class JacobianVisualizationCallback(BaseVisualizationCallback):
         # Plot predicted vJp
         for t in range(num_timesteps):
             pred_vjp_np = pred_vjp[t]
-            pred_range = max(abs(pred_vjp_np.min()), abs(pred_vjp_np.max()))
+            pred_range = max(abs(true_vjp_np.min()), abs(true_vjp_np.max())) # scale according to true vjp
             norm_pred = SymLogNorm(linthresh=0.1 * pred_range, vmin=-pred_range, vmax=pred_range)
             im = axes[2, t].imshow(pred_vjp_np, cmap=cmap, norm=norm_pred)
             axes[2, t].set_title(f'Predicted VJP t={t+1}')
@@ -305,7 +305,7 @@ class JacobianVisualizationCallback(BaseVisualizationCallback):
         # Plot error
         for t in range(num_timesteps):
             error_np = np.abs(true_vjp[t] - pred_vjp[t])
-            error_range = max(abs(error_np.min()), abs(error_np.max()))
+            error_range = max(abs(true_vjp_np.min()), abs(true_vjp_np.max())) # scale according to true vjp
             norm_error = SymLogNorm(linthresh=0.1 * error_range, vmin=-error_range, vmax=error_range)
             im = axes[3, t].imshow(error_np, cmap='magma', norm=norm_error)
             axes[3, t].set_title(f'Error t={t+1}')

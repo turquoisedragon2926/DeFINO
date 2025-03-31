@@ -168,11 +168,6 @@ def main():
     best_model_path = checkpoint_callback.best_model_path
     logger.info(f"Best model saved at: {best_model_path}")
     
-    # Test best model
-    if best_model_path:
-        logger.info("Testing best model")
-        trainer.test(ckpt_path=best_model_path, test_dataloaders=test_loader)
-    
     # Close Neptune run if it was initialized
     if neptune_run:
         neptune_run.stop()

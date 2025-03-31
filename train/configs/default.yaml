@@ -22,22 +22,22 @@ model:
   in_channels: 1
   out_channels: 1
   decoder_layer_size: 128
-  num_fno_layers: 3
-  num_fno_modes: [2, 15, 15]
+  num_fno_layers: 6
+  num_fno_modes: [3, 64, 64]
   padding: 3
   dimension: 3
-  latent_channels: 64
+  latent_channels: 32
 
 training:
-  loss_type: "MSE"  # Using standard MSE loss (technically L2 bc I changed it) / "JAC" for Jacobian regularization
-  reg_param: 0.01 # not used for MSE
+  loss_type: "JAC"  # Using standard MSE loss (technically L2 bc I changed it) / "JAC" for Jacobian regularization
+  reg_param: 0.5 # not used for MSE
   scale_factor: 5500.0 # not used for MSE
   batch_size: 1
   accum_steps: 1
   num_workers: 4
   learning_rate: 1e-3
   weight_decay: 5e-4
-  num_epoch: 200
+  num_epoch: 50
   check_val_every_n_epoch: 1
 
   # Checkpointing stuff
