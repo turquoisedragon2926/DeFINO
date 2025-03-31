@@ -1,5 +1,5 @@
 experiment:
-  name: "GCS_MSE_training"
+  name: "GCS_training"
   log_dir: "logs"
   output_dir: "output"
   checkpoint_dir: "checkpoints"
