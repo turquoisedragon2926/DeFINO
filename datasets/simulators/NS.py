@@ -2,124 +2,218 @@ import torch
 import torch.autograd.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 from .base import Simulator
+from scipy.fft import fft2, ifft2, fftshift
+import torch.fft as fft
 
-'''
-input: velocity fields vx, vy
-output: velocity fields vx, vy
-'''
+class NavierStokesSimulator(torch.nn.Module):
+    def __init__(self, 
+                 s1, 
+                 s2,
+                 scale=10.0,
+                 T=1.0,
+                 Re=100,
+                 adaptive=True,
+                 delta_t=1e-3,
+                 nsteps=1000):
 
-class NavierStokesSimulator(Simulator):
-    def __init__(self, N, L, dt, nu, nsteps):
         super().__init__()
-        self.N = N
-        self.L = L
-        self.dt = dt
-        self.nu = nu
+
+        self.s1 = s1
+        self.s2 = s2
+        self.scale = scale
+        self.T = T
+        self.Re = Re
+        self.adaptive = adaptive
+        self.delta_t = delta_t
         self.nsteps = nsteps
+
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.setup_fourier_space()
+        self.dtype = torch.float64
 
-    def setup_fourier_space(self):
-        klin = 2.0 * torch.pi / self.L * torch.arange(-self.N//2, self.N//2, device=self.device)
-        self.kx, self.ky = torch.meshgrid(klin, klin, indexing='ij')
-        self.kx = torch.fft.ifftshift(self.kx)
-        self.ky = torch.fft.ifftshift(self.ky)
-        self.kSq = self.kx**2 + self.ky**2
-        self.kSq_inv = 1.0 / self.kSq
-        self.kSq_inv[self.kSq == 0] = 1
+        # TODO: Move to config
+        L1 = 2*math.pi
+        L2 = 2*math.pi
+        self.L1 = L1
+        self.L2 = L2
 
-        xlin = torch.linspace(0, self.L, self.N, device=self.device)
-        self.xx, self.yy = torch.meshgrid(xlin, xlin, indexing='ij')
 
-        kmax = torch.max(klin)
-        self.dealias = ((torch.abs(self.kx) < (2./3.)*kmax) & (torch.abs(self.ky) < (2./3.)*kmax)).float()
+        self.h = 1.0/max(s1, s2)
+
+        t = torch.linspace(0, 1, s1 + 1, device=self.device)
+        t = t[0:-1]
+        X, Y = torch.meshgrid(t, t)
+        self.f = 0.1 * (torch.sin(2 * math.pi * (X + Y)) + torch.cos(2 * math.pi * (X + Y))) # forcing function
+
+
+        #Wavenumbers for first derivatives
+        freq_list1 = torch.cat((torch.arange(start=0, end=s1//2, step=1),\
+                                torch.zeros((1,)),\
+                                torch.arange(start=-s1//2 + 1, end=0, step=1)), 0)
+        self.k1 = freq_list1.view(-1,1).repeat(1, s2//2 + 1).type(self.dtype).to(self.device)
+
+
+        freq_list2 = torch.cat((torch.arange(start=0, end=s2//2, step=1), torch.zeros((1,))), 0)
+        self.k2 = freq_list2.view(1,-1).repeat(s1, 1).type(self.dtype).to(self.device)
+
+        #Negative Laplacian
+        freq_list1 = torch.cat((torch.arange(start=0, end=s1//2, step=1),\
+                                torch.arange(start=-s1//2, end=0, step=1)), 0)
+        k1 = freq_list1.view(-1,1).repeat(1, s2//2 + 1).type(self.dtype).to(self.device)
+
+        freq_list2 = torch.arange(start=0, end=s2//2 + 1, step=1)
+        k2 = freq_list2.view(1,-1).repeat(s1, 1).type(self.dtype).to(self.device)
+
+        self.G = ((4*math.pi**2)/(L1**2))*k1**2 + ((4*math.pi**2)/(L2**2))*k2**2
+
+        #Inverse of negative Laplacian
+        self.inv_lap = self.G.clone()
+        self.inv_lap[0,0] = 1.0
+        self.inv_lap = 1.0/self.inv_lap
+
+        #Dealiasing mask using 2/3 rule
+        self.dealias = (self.k1**2 + self.k2**2 <= 0.6*(0.25*s1**2 + 0.25*s2**2)).type(self.dtype).to(self.device)
+        #Ensure mean zero
+        self.dealias[0,0] = 0.0
+
+    #Compute stream function from vorticity (Fourier space)
+    def stream_function(self, w_h, real_space=False):
+        #-Lap(psi) = w
+        psi_h = self.inv_lap*w_h
+
+        if real_space:
+            return fft.irfft2(psi_h, s=(self.s1, self.s2))
+        else:
+            return psi_h
+
+    #Compute velocity field from stream function (Fourier space)
+    def velocity_field(self, stream_f, real_space=True):
+        #Velocity field in x-direction = psi_y
+        q_h = (2*math.pi/self.L2)*1j*self.k2*stream_f
+
+        #Velocity field in y-direction = -psi_x
+        v_h = -(2*math.pi/self.L1)*1j*self.k1*stream_f
+
+        if real_space:
+            return fft.irfft2(q_h, s=(self.s1, self.s2)), fft.irfft2(v_h, s=(self.s1, self.s2))
+        else:
+            return q_h, v_h
+
+    #Compute non-linear term + forcing from given vorticity (Fourier space)
+    def nonlinear_term(self, w_h, f_h=None):
+        #Physical space vorticity
+        w = fft.irfft2(w_h, s=(self.s1, self.s2))
+
+        #Physical space velocity
+        q, v = self.velocity_field(self.stream_function(w_h, real_space=False), real_space=True)
+
+        #Compute non-linear term in Fourier space
+        nonlin = -1j*((2*math.pi/self.L1)*self.k1*fft.rfft2(q*w) + (2*math.pi/self.L1)*self.k2*fft.rfft2(v*w))
+
+        #Add forcing function
+        if f_h is not None:
+            nonlin += f_h
+
+        return nonlin
+    
+    def time_step(self, q, v, f, Re):
+        #Maxixum speed
+        max_speed = torch.max(torch.sqrt(q**2 + v**2)).item()
+
+        #Maximum force amplitude
+        if f is not None:
+            xi = torch.sqrt(torch.max(torch.abs(f))).item()
+        else:
+            xi = 1.0
+        
+        #Viscosity
+        mu = (1.0/Re)*xi*((self.L1/(2*math.pi))**(3.0/4.0))*(((self.L2/(2*math.pi))**(3.0/4.0)))
+
+        if max_speed == 0:
+            return 0.5*(self.h**2)/mu
+        
+        #Time step based on CFL condition
+        return min(0.5*self.h/max_speed, 0.5*(self.h**2)/mu)
+
+    def advance(self, w):
+
+        #Rescale Laplacian by Reynolds number
+        GG = (1.0/self.Re)*self.G
+
+        #Move to Fourier space
+        w_h = fft.rfft2(w)
+
+        if self.f is not None:
+            f_h = fft.rfft2(self.f)
+        else:
+            f_h = None
+        
+        if self.adaptive:
+            q, v = self.velocity_field(self.stream_function(w_h, real_space=False), real_space=True)
+            delta_t = self.time_step(q, v, self.f, self.Re)
+
+        time  = 0.0
+        #Advance solution in Fourier space
+        while time < self.T:
+            if time + delta_t > self.T:
+                current_delta_t = self.T - time
+            else:
+                current_delta_t = delta_t
+
+            #Inner-step of Heun's method
+            nonlin1 = self.nonlinear_term(w_h, f_h)
+            w_h_tilde = (w_h + current_delta_t*(nonlin1 - 0.5*GG*w_h))/(1.0 + 0.5*current_delta_t*GG)
+
+            #Cranck-Nicholson + Heun update
+            nonlin2 = self.nonlinear_term(w_h_tilde, f_h)
+            w_h = (w_h + current_delta_t*(0.5*(nonlin1 + nonlin2) - 0.5*GG*w_h))/(1.0 + 0.5*current_delta_t*GG)
+
+            #De-alias
+            w_h *= self.dealias
+
+            #Update time
+            time += current_delta_t
+
+            #New time step
+            if self.adaptive:
+                q, v = self.velocity_field(self.stream_function(w_h, real_space=False), real_space=True)
+                delta_t = self.time_step(q, v, self.f, self.Re)
+        
+        return fft.irfft2(w_h, s=(self.s1, self.s2))
         
     def sample(self):
-            
-        freq_x = torch.normal(mean=8.0, std=0.3, size=(1,), device=self.device).item()
-        freq_y = torch.normal(mean=16.0, std=0.5, size=(1,), device=self.device).item()
-        phase_x = torch.normal(mean=0.0, std=1., size=(1,), device=self.device).item()
-        phase_y = torch.normal(mean=0.0, std=1., size=(1,), device=self.device).item()
+        nx, ny = self.s1, self.s2
+        # Generate white noise in the Fourier domain (complex numbers)
+        noise = np.random.randn(nx, ny) + 1j * np.random.randn(nx, ny)
+
+        # Generate grid of frequency indices
+        kx = np.fft.fftfreq(nx)[:, None]  # Frequency indices for x-axis
+        ky = np.fft.fftfreq(ny)[None, :]  # Frequency indices for y-axis
+
+        # Compute the radial frequency (distance from the origin in the Fourier domain)
+        k = np.sqrt(kx**2 + ky**2)
+
+        # Power spectrum: scale controls the smoothness (higher scale = smoother field)
+        power_spectrum = np.exp(-k**2 * self.scale**2)
+
+        # Apply the power spectrum to the noise
+        field_fourier = noise * np.sqrt(power_spectrum)
+
+        # Inverse Fourier transform to get the field in spatial domain
+        field = np.real(ifft2(field_fourier))
+
+        # Normalize the field (optional)
+        field -= np.mean(field)
+        field /= np.std(field)
+
+        return torch.tensor(field).to(self.device)
     
-        vx = -torch.sin(freq_y * torch.pi * self.yy + phase_y)
-        vy = torch.sin(freq_x * torch.pi * self.xx + phase_x)
-        
-        return torch.stack([vx, vy], dim=0)
-        
-    def forward(self, x):
-        vx = x[0]
-        vy = x[1]
-        
+    def forward(self, w):
         for i in range(self.nsteps):
-            
-            if i % 100 == 0:
-                print(f"NS Simulator Step {i + 1} of {self.nsteps}")
-
-            dvx_x, dvx_y = self.grad(vx)
-            dvy_x, dvy_y = self.grad(vy)
-            
-            rhs_x = -(vx * dvx_x + vy * dvx_y)
-            rhs_y = -(vx * dvy_x + vy * dvy_y)
-            
-            rhs_x = self.apply_dealias(rhs_x)
-            rhs_y = self.apply_dealias(rhs_y)
-
-            vx = vx + self.dt * rhs_x
-            vy = vy + self.dt * rhs_y
-            
-            div_rhs = self.div(rhs_x, rhs_y)
-            P = self.poisson_solve(div_rhs)
-            dPx, dPy = self.grad(P)
-            
-            vx = vx - self.dt * dPx
-            vy = vy - self.dt * dPy
-            
-            vx = self.diffusion_solve(vx)
-            vy = self.diffusion_solve(vy)
-        
-        return torch.stack([vx, vy], dim=0)
-
-    def grad(self, v):
-        v_hat = torch.fft.fftn(v)
-        return (
-            torch.real(torch.fft.ifftn(1j * self.kx * v_hat)),
-            torch.real(torch.fft.ifftn(1j * self.ky * v_hat))
-        )
-
-    def div(self, vx, vy):
-        return (
-            torch.real(torch.fft.ifftn(1j * self.kx * torch.fft.fftn(vx))) +
-            torch.real(torch.fft.ifftn(1j * self.ky * torch.fft.fftn(vy)))
-        )
-
-    def curl(self, vx, vy):
-        return (
-            torch.real(torch.fft.ifftn(1j * self.ky * torch.fft.fftn(vx))) -
-            torch.real(torch.fft.ifftn(1j * self.kx * torch.fft.fftn(vy)))
-        )
-
-    def poisson_solve(self, rho):
-        rho_hat = torch.fft.fftn(rho)
-        phi_hat = -rho_hat * self.kSq_inv
-        return torch.real(torch.fft.ifftn(phi_hat))
-
-    def diffusion_solve(self, v):
-        v_hat = torch.fft.fftn(v)
-        v_hat = v_hat / (1.0 + self.dt * self.nu * self.kSq)
-        return torch.real(torch.fft.ifftn(v_hat))
-
-    def apply_dealias(self, f):
-        f_hat = self.dealias * torch.fft.fftn(f)
-        return torch.real(torch.fft.ifftn(f_hat))
-
-    @property
-    def domain(self):
-        return 2 * self.N ** 2
-    
-    @property
-    def range(self):
-        return 2 * self.N ** 2
+            print(f"NS Simulator Step {i + 1} of {self.nsteps}")
+            w = self.advance(w)
+        return w
 
     def plot_data(self, x, y, v, Jvp, file_path="plot.png", title="NS Sample Plot"):
         """
@@ -132,15 +226,10 @@ class NavierStokesSimulator(Simulator):
             Jvp: Jacobian-vector product velocity fields
             file_path: Path to save the plot
         """
-        # Helper function to prepare data
         def prepare_field(field):
-            field = field.reshape(2, 128, 128)
-            curl = self.curl(field[0], field[1])
-            # Convert to numpy arrays for plotting
+            field = field.reshape(self.s1, self.s2)
             return {
-                'vx': field[0].cpu().numpy(),
-                'vy': field[1].cpu().numpy(),
-                'curl': curl.cpu().numpy()
+                'vorticity': field.cpu().numpy()
             }
         
         # Prepare all fields
@@ -150,27 +239,29 @@ class NavierStokesSimulator(Simulator):
         jvp_data = prepare_field(Jvp)
         
         # Create figure and subplots
-        fig, axs = plt.subplots(4, 3, figsize=(15, 20))
+        fig, axs = plt.subplots(4, 1, figsize=(5, 20))
         fig.suptitle(title)
         
         # Data to plot with corresponding titles
         plot_data = [
-            (0, x_data, ['Input vx', 'Input vy', 'Input curl']),
-            (1, y_data, ['Output vx', 'Output vy', 'Output curl']),
-            (2, v_data, ['Eigenvector 1 vx', 'Eigenvector 1 vy', 'Eigenvector 1 curl']),
-            (3, jvp_data, ['Jvp 1 vx', 'Jvp 1 vy', 'Jvp 1 curl'])
+            (0, x_data, ['Input vorticity']),
+            (1, y_data, ['Output vorticity']),
+            (2, v_data, ['Eigenvector vorticity']),
+            (3, jvp_data, ['Jvp vorticity'])
         ]
         
         # Plot all data
         for row, data, titles in plot_data:
-            axs[row, 0].imshow(data['vx'], cmap='RdBu')
-            axs[row, 0].set_title(titles[0])
-            
-            axs[row, 1].imshow(data['vy'], cmap='RdBu')
-            axs[row, 1].set_title(titles[1])
-            
-            axs[row, 2].imshow(data['curl'], cmap='RdBu')
-            axs[row, 2].set_title(titles[2])
+            axs[row].imshow(data['vorticity'], cmap='RdBu')
+            axs[row].set_title(titles[0])
         
         plt.savefig(file_path)
         plt.close()
+
+    @property
+    def domain(self):
+        return self.s1 * self.s2
+    
+    @property
+    def range(self):
+        return self.s1 * self.s2

@@ -1,28 +1,26 @@
 experiment:
   name: "Navier Stokes Generation"
   seed: 42
-  simulator_type: "NS"
+  simulator_type: "OldNS"
   reduced_model_type: "RAND" # "FIM" or "RAND"
 
 viz_settings:
   plot_interval: 1
   plot_vector_count: 1
-  plots_dir: "datasets/dataset_NS/plots"
+  plots_dir: "datasets/dataset_NS_old/plots"
 
 data_settings:
-  num_samples: 2
+  num_samples: 1
   num_workers: 1
-  output_dir: "datasets/dataset_NS/samples"
+  output_dir: "datasets/dataset_NS_old/samples"
 
 simulator_settings:
-  s1: 128 # Grid size
-  s2: 128 # Grid size
-  scale: 10.0
-  T: 1.0
-  Re: 100
-  adaptive: True
-  delta_t: 1e-3
-  nsteps: 50
+  N: 128 # Grid size
+  L: 1.0 # Domain length
+  dt: 0.001 # Time step
+  nu: 0.001 # Viscosity
+  nsteps: 500 # Number of time steps to forward solve
+  burnin: 200
 
 reduced_model_settings:
   eigen_value_fraction: 0.01

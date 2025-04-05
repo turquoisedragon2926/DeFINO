@@ -1,10 +1,6 @@
 import os
 import h5py
 import torch
-from simulators.NS import NavierStokesSimulator
-
-from reduced_orders.fim import FIMReducedModel
-from reduced_orders.random import RandomReducedModel
 
 from omegaconf import DictConfig, OmegaConf
 import matplotlib.pyplot as plt
@@ -23,19 +19,33 @@ def load_config(config_path: str) -> DictConfig:
 
 def create_simulator(model_type, simulator_settings):
     if model_type == "NS":
-        return NavierStokesSimulator(simulator_settings['N'], 
+        from simulators.NS import NavierStokesSimulator
+        return NavierStokesSimulator(simulator_settings['s1'], 
+                                     simulator_settings['s2'],
+                                     simulator_settings['scale'],
+                                     simulator_settings['T'], 
+                                     simulator_settings['Re'],
+                                     simulator_settings['adaptive'],
+                                     simulator_settings['delta_t'],
+                                     simulator_settings['nsteps'])
+    elif model_type == "OldNS":
+        from simulators.oldNS import OldNavierStokesSimulator
+        return OldNavierStokesSimulator(simulator_settings['N'], 
                                      simulator_settings['L'], 
                                      simulator_settings['dt'], 
                                      simulator_settings['nu'],
-                                     simulator_settings['nsteps'])
+                                     simulator_settings['nsteps'],
+                                     simulator_settings['burnin'])
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
 def create_reduced_model(reduced_model_type, reduced_model_settings):
     if reduced_model_type == "FIM":
+        from reduced_orders.fim import FIMReducedModel
         return FIMReducedModel(reduced_model_settings['eigen_value_fraction'],
                                reduced_model_settings['eigen_vector_count'])
     elif reduced_model_type == "RAND":
+        from reduced_orders.random import RandomReducedModel
         return RandomReducedModel(reduced_model_settings['eigen_value_fraction'],
                                   reduced_model_settings['eigen_vector_count'])
     else:

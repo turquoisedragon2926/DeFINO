@@ -18,11 +18,5 @@ class Simulator(torch.nn.Module):
     def range(self):
         pass
 
-    def process_input(self, x):
-        pass
-
-    def process_output(self, x):
-        pass
-
     def plot_data(self, x, y, v, Jvp, file_path="plot.png", title="NS Sample Plot"):
         pass
