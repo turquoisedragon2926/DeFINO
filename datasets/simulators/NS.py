@@ -211,7 +211,8 @@ class NavierStokesSimulator(torch.nn.Module):
     
     def forward(self, w):
         for i in range(self.nsteps):
-            print(f"NS Simulator Step {i + 1} of {self.nsteps}")
+            if i % 10 == 0:
+                print(f"NS Simulator Step {i + 1} of {self.nsteps}")
             w = self.advance(w)
         return w
 
@@ -252,7 +253,7 @@ class NavierStokesSimulator(torch.nn.Module):
         
         # Plot all data
         for row, data, titles in plot_data:
-            axs[row].imshow(data['vorticity'], cmap='RdBu')
+            axs[row].imshow(data['vorticity'], cmap='jet')
             axs[row].set_title(titles[0])
         
         plt.savefig(file_path)

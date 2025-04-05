@@ -22,7 +22,7 @@ simulator_settings:
   Re: 100
   adaptive: True
   delta_t: 1e-3
-  nsteps: 50
+  nsteps: 25
 
 reduced_model_settings:
   eigen_value_fraction: 0.01
