@@ -2,7 +2,10 @@ import os
 import h5py
 import torch
 from simulators.NS import NavierStokesSimulator
+
 from reduced_orders.fim import FIMReducedModel
+from reduced_orders.random import RandomReducedModel
+
 from omegaconf import DictConfig, OmegaConf
 import matplotlib.pyplot as plt
 
@@ -32,9 +35,12 @@ def create_reduced_model(reduced_model_type, reduced_model_settings):
     if reduced_model_type == "FIM":
         return FIMReducedModel(reduced_model_settings['eigen_value_fraction'],
                                reduced_model_settings['eigen_vector_count'])
+    elif reduced_model_type == "RAND":
+        return RandomReducedModel(reduced_model_settings['eigen_value_fraction'],
+                                  reduced_model_settings['eigen_vector_count'])
     else:
         raise ValueError(f"Unsupported reduced model type: {reduced_model_type}")
-    
+
 def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
     output_dir = data_settings['output_dir']
     plots_dir = viz_settings['plots_dir']
@@ -45,9 +51,12 @@ def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
     num_samples = data_settings['num_samples']
     plot_interval = viz_settings['plot_interval']
     plot_vector_count = viz_settings['plot_vector_count']
-
-    for i in range(num_samples):
-        
+    
+    # Get the number of workers from settings or default to CPU count - 1
+    num_workers = data_settings.get('num_workers', max(1, os.cpu_count() - 1))
+    
+    # Define a worker function to process each sample
+    def process_sample(i):
         print(f"Generating sample {i + 1} of {num_samples}")
         
         eigen_count = reduced_model.eigen_count(simulator)
@@ -57,7 +66,6 @@ def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
         Jvp = torch.zeros((simulator.range, eigen_count)).to(x.device)
 
         for e in range(eigen_count):
-
             print(f"Eigenvector {e + 1} of {eigen_count}")
             
             vector = v[:, e].reshape(x.shape).to(x.device)
@@ -65,7 +73,6 @@ def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
             Jvp[:, e] = jvp_vector.reshape(simulator.range)
 
         if i % plot_interval == 0:
-
             sample_dir = os.path.join(plots_dir, f"sample_{i}")
             os.makedirs(sample_dir, exist_ok=True)
 
@@ -79,3 +86,29 @@ def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
             f.create_dataset("y", data=y.cpu().numpy())
             f.create_dataset("v", data=v.cpu().numpy())
             f.create_dataset("Jvp", data=Jvp.cpu().numpy())
+        
+        return i
+
+    # Use ThreadPoolExecutor for I/O-bound operations
+    import concurrent.futures
+    from tqdm import tqdm
+    
+    print(f"Starting dataset generation with {num_workers} workers")
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+        # Submit all tasks and create a dictionary of futures
+        future_to_sample = {executor.submit(process_sample, i): i for i in range(num_samples)}
+        
+        # Process results as they complete
+        completed = 0
+        with tqdm(total=num_samples, desc="Generating samples") as pbar:
+            for future in concurrent.futures.as_completed(future_to_sample):
+                sample_idx = future_to_sample[future]
+                try:
+                    result = future.result()
+                    completed += 1
+                    pbar.update(1)
+                except Exception as exc:
+                    print(f'Sample {sample_idx} generated an exception: {exc}')
+        
+        print(f"Completed {completed}/{num_samples} samples")

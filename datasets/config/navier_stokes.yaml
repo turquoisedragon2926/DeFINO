@@ -2,7 +2,7 @@ experiment:
   name: "Navier Stokes Generation"
   seed: 42
   simulator_type: "NS"
-  reduced_model_type: "FIM"
+  reduced_model_type: "FIM" # "FIM" or "RAND"
 
 viz_settings:
   plot_interval: 1
@@ -11,6 +11,7 @@ viz_settings:
 
 data_settings:
   num_samples: 1
+  num_workers: 1
   output_dir: "datasets/dataset_NS/"
 
 simulator_settings:
