@@ -1,0 +1,81 @@
+import os
+import h5py
+import torch
+from simulators.NS import NavierStokesSimulator
+from reduced_orders.fim import FIMReducedModel
+from omegaconf import DictConfig, OmegaConf
+import matplotlib.pyplot as plt
+
+def load_config(config_path: str) -> DictConfig:
+    """
+    Load configuration from YAML file.
+    
+    Args:
+        config_path: Path to configuration file
+        
+    Returns:
+        Configuration as DictConfig
+    """
+    return OmegaConf.load(config_path)
+
+def create_simulator(model_type, simulator_settings):
+    if model_type == "NS":
+        return NavierStokesSimulator(simulator_settings['N'], 
+                                     simulator_settings['L'], 
+                                     simulator_settings['dt'], 
+                                     simulator_settings['nu'],
+                                     simulator_settings['nsteps'])
+    else:
+        raise ValueError(f"Unsupported model type: {model_type}")
+
+def create_reduced_model(reduced_model_type, reduced_model_settings):
+    if reduced_model_type == "FIM":
+        return FIMReducedModel(reduced_model_settings['eigen_value_fraction'],
+                               reduced_model_settings['eigen_vector_count'])
+    else:
+        raise ValueError(f"Unsupported reduced model type: {reduced_model_type}")
+    
+def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
+    output_dir = data_settings['output_dir']
+    plots_dir = viz_settings['plots_dir']
+
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(plots_dir, exist_ok=True)
+
+    num_samples = data_settings['num_samples']
+    plot_interval = viz_settings['plot_interval']
+    plot_vector_count = viz_settings['plot_vector_count']
+
+    for i in range(num_samples):
+        
+        print(f"Generating sample {i + 1} of {num_samples}")
+        
+        eigen_count = reduced_model.eigen_count(simulator)
+
+        x = simulator.sample()
+        v = reduced_model.get_direction(simulator, x).to(x.device)
+        Jvp = torch.zeros((simulator.range, eigen_count)).to(x.device)
+
+        for e in range(eigen_count):
+
+            print(f"Eigenvector {e + 1} of {eigen_count}")
+            
+            vector = v[:, e].reshape(x.shape).to(x.device)
+            y, jvp_vector = torch.func.jvp(simulator, (x,), (vector,))
+            Jvp[:, e] = jvp_vector.reshape(simulator.range)
+
+        if i % plot_interval == 0:
+
+            sample_dir = os.path.join(plots_dir, f"sample_{i}")
+            os.makedirs(sample_dir, exist_ok=True)
+
+            for e in range(plot_vector_count):
+                plot_path = os.path.join(sample_dir, f"vector_{e}.png")
+                simulator.plot_data(x, y, v[:, e], Jvp[:, e], plot_path, f"Sample {i} Eigenvector {e}")
+        
+        sample_path = os.path.join(output_dir, f"sample_{i}.h5")
+        with h5py.File(sample_path, "w") as f:
+            f.create_dataset("x", data=x.cpu().numpy())
+            f.create_dataset("y", data=y.cpu().numpy())
+            f.create_dataset("v", data=v.cpu().numpy())
+            f.create_dataset("Jvp", data=Jvp.cpu().numpy())

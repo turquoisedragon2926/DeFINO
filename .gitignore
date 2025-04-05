@@ -33,3 +33,4 @@
 /.neptune/
 __pycache__/
 .env
+/datasets/dataset_*
