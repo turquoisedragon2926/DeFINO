@@ -216,8 +216,8 @@ class NavierStokesSimulator(torch.nn.Module):
     
     def forward(self, w):
         for i in range(self.nsteps):
-            # if (i + 1) % 10 == 0:
-                # print(f"NS Simulator Step {i + 1} of {self.nsteps}")
+            if (i + 1) % 10 == 0:
+                print(f"NS Simulator Step {i + 1} of {self.nsteps}")
             w = self.advance(w)
         return w
 

@@ -67,7 +67,7 @@ def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
     
     # Define a worker function to process each sample
     def process_sample(i):
-        # print(f"Generating sample {i + 1} of {num_samples}")
+        print(f"Generating sample {i + 1} of {num_samples}")
         
         eigen_count = reduced_model.eigen_count(simulator)
         
@@ -77,7 +77,7 @@ def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
         Jvp = torch.zeros((simulator.range, eigen_count)).to(x.device)
 
         for e in range(eigen_count):
-            # print(f"Eigenvector {e + 1} of {eigen_count}")
+            print(f"Eigenvector {e + 1} of {eigen_count}")
             vector = v[:, e].reshape(x.shape).to(x.device)
             y, jvp_vector = torch.func.jvp(simulator, (x,), (vector,))
             Jvp[:, e] = jvp_vector.reshape(simulator.range)

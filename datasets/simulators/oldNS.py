@@ -81,8 +81,8 @@ class OldNavierStokesSimulator(Simulator):
         vy = x[1]
         
         for i in range(self.nsteps):
-            # if i % 100 == 0:
-            #     print(f"OLD NS Simulator Step {i + 1} of {self.nsteps}")
+            if i % 100 == 0:
+                print(f"OLD NS Simulator Step {i + 1} of {self.nsteps}")
             vx, vy = self.forward_step(vx, vy)
         
         return torch.stack([vx, vy], dim=0)

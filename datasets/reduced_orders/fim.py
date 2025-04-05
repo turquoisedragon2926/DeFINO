@@ -21,7 +21,7 @@ class FIMReducedModel(ReducedModel):
             
             Q = torch.zeros((simulator.domain, eigen_count))
             for j in range(eigen_count):
-                # print(f"Computing FIM Eigenvector {j + 1} of {eigen_count}")
+                print(f"Computing FIM Eigenvector {j + 1} of {eigen_count}")
 
                 probe_vector = B[:, j].reshape(y.shape)
                 Q[:, j] = vjp_func(probe_vector)[0].reshape((simulator.domain,))
