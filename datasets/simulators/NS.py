@@ -16,6 +16,7 @@ class NavierStokesSimulator(torch.nn.Module):
                  Re=100,
                  adaptive=True,
                  delta_t=1e-3,
+                 nburn=10,
                  nsteps=1000):
 
         super().__init__()
@@ -27,6 +28,7 @@ class NavierStokesSimulator(torch.nn.Module):
         self.Re = Re
         self.adaptive = adaptive
         self.delta_t = delta_t
+        self.nburn = nburn
         self.nsteps = nsteps
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -207,12 +209,15 @@ class NavierStokesSimulator(torch.nn.Module):
         field -= np.mean(field)
         field /= np.std(field)
 
-        return torch.tensor(field).to(self.device)
+        w0 = torch.tensor(field).to(self.device)
+        for i in range(self.nburn):
+            w0 = self.advance(w0)
+        return w0
     
     def forward(self, w):
         for i in range(self.nsteps):
-            if i % 10 == 0:
-                print(f"NS Simulator Step {i + 1} of {self.nsteps}")
+            # if (i + 1) % 10 == 0:
+                # print(f"NS Simulator Step {i + 1} of {self.nsteps}")
             w = self.advance(w)
         return w
 

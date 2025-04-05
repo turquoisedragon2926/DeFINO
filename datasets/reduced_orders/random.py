@@ -7,7 +7,10 @@ class RandomReducedModel(ReducedModel):
         self.eigen_vector_count = eigen_vector_count
 
     def get_direction(self, simulator, x):
-        return torch.randn((simulator.domain, self.eigen_count(simulator)))
+        return torch.randn((simulator.domain, self.eigen_count(simulator))), None
+    
+    def plot_decay(self, s, path, title):
+        pass
 
     def eigen_count(self, simulator):
         if self.eigen_vector_count is not None:

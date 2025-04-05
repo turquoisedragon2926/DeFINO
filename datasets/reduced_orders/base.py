@@ -8,3 +8,6 @@ class ReducedModel:
     @property
     def eigen_count(self):
         pass
+
+    def plot_decay(self, s, path, title):
+        pass

@@ -3,7 +3,7 @@ import yaml
 import os
 import torch
 
-from utils import create_simulator, create_reduced_model, load_config, generate_dataset
+from utils import create_simulator, create_reduced_model, load_config, generate_dataset, save_config
 
 def main():
     parser = argparse.ArgumentParser(description='Dataset Generation')
@@ -12,6 +12,7 @@ def main():
 
     # Load configuration
     config = load_config(args.config)
+    save_config(config)
     
     experiment = config['experiment']
     viz_settings = config['viz_settings']

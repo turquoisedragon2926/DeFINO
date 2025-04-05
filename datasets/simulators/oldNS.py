@@ -10,14 +10,14 @@ output: velocity fields vx, vy
 '''
 
 class OldNavierStokesSimulator(Simulator):
-    def __init__(self, N, L, dt, nu, nsteps=500, burnin=200):
+    def __init__(self, N, L, dt, nu, nburn=200, nsteps=500):
         super().__init__()
         self.N = N
         self.L = L
         self.dt = dt
         self.nu = nu
+        self.nburn = nburn
         self.nsteps = nsteps
-        self.burnin = burnin
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.setup_fourier_space()
 
@@ -46,7 +46,7 @@ class OldNavierStokesSimulator(Simulator):
         vx = -torch.sin(freq_y * torch.pi * self.yy + phase_y)
         vy = torch.sin(freq_x * torch.pi * self.xx + phase_x)
         
-        for i in range(self.burnin):
+        for i in range(self.nburn):
             vx, vy = self.forward_step(vx, vy)
         
         return torch.stack([vx, vy], dim=0)
@@ -81,10 +81,8 @@ class OldNavierStokesSimulator(Simulator):
         vy = x[1]
         
         for i in range(self.nsteps):
-            
-            if i % 100 == 0:
-                print(f"OLD NS Simulator Step {i + 1} of {self.nsteps}")
-
+            # if i % 100 == 0:
+            #     print(f"OLD NS Simulator Step {i + 1} of {self.nsteps}")
             vx, vy = self.forward_step(vx, vy)
         
         return torch.stack([vx, vy], dim=0)
