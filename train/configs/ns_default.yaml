@@ -48,7 +48,7 @@ training_settings:
 
 visualization_settings:
   save_to_disk: true
-  log_to_neptune: false
+  log_to_neptune: true
   num_plots: 2
   check_val_every_n_epoch: 10
   plot_interval: 10
