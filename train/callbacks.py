@@ -17,7 +17,7 @@ except ImportError:
 class BaseVisualizationCallback(Callback):
     """Base class for visualization callbacks."""
     
-    def __init__(self, output_dir=None, save_to_disk=False, log_to_neptune=False, num_plots=1):
+    def __init__(self, output_dir=None, save_to_disk=False, log_to_neptune=False, num_plots=1, plot_interval=1):
         """
         Initialize visualization callback.
         
@@ -25,11 +25,14 @@ class BaseVisualizationCallback(Callback):
             output_dir: Directory to save visualizations locally
             save_to_disk: Whether to save to disk
             log_to_neptune: Whether to log to Neptune
+            num_plots: Number of plots to generate
+            plot_interval: Plot every N epochs
         """
         super().__init__()
         self.output_dir = output_dir
         self.save_to_disk = save_to_disk
         self.num_plots = num_plots
+        self.plot_interval = plot_interval
         if output_dir and not os.path.exists(output_dir) and save_to_disk:
             os.makedirs(output_dir, exist_ok=True)
         
@@ -58,7 +61,8 @@ class SaturationVisualizationCallback(BaseVisualizationCallback):
     
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
-        self.plot_saturation_results(trainer, pl_module, trainer.train_dataloader, "train")
+        if trainer.current_epoch % self.plot_interval == 0:
+            self.plot_saturation_results(trainer, pl_module, trainer.train_dataloader, "train")
     
     def on_validation_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each validation epoch."""
@@ -192,7 +196,8 @@ class JacobianVisualizationCallback(BaseVisualizationCallback):
     
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
-        self.plot_jacobian_results(trainer, pl_module, trainer.train_dataloader, "train")
+        if trainer.current_epoch % self.plot_interval == 0:
+            self.plot_jacobian_results(trainer, pl_module, trainer.train_dataloader, "train")
     
     def on_validation_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each validation epoch."""
@@ -366,7 +371,8 @@ class NSVisualizationCallback(BaseVisualizationCallback):
     
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
-        self.plot_ns_results(trainer, pl_module, trainer.train_dataloader, "train")
+        if trainer.current_epoch % self.plot_interval == 0:
+            self.plot_ns_results(trainer, pl_module, trainer.train_dataloader, "train")
         
     def on_validation_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each validation epoch."""
@@ -440,7 +446,8 @@ class NS_JVP_VisualizationCallback(BaseVisualizationCallback):
     
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
-        self.plot_jvp_results(trainer, pl_module, trainer.train_dataloader, "train")
+        if trainer.current_epoch % self.plot_interval == 0:
+            self.plot_jvp_results(trainer, pl_module, trainer.train_dataloader, "train")
         
     def on_validation_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each validation epoch."""

@@ -93,7 +93,7 @@ def main():
         min_delta=1e-4,
         mode="min"
     )
-    callbacks.append(early_stopping_callback)
+    # callbacks.append(early_stopping_callback) # TODO: Fix whatever is causing error
     
     # Learning rate monitor
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
@@ -105,7 +105,8 @@ def main():
         output_dir=os.path.join(directories['plot_dir'], 'forward'),
         save_to_disk=config.visualization_settings.save_to_disk,
         log_to_neptune=config.visualization_settings.log_to_neptune,
-        num_plots=config.visualization_settings.num_plots
+        num_plots=config.visualization_settings.num_plots,
+        plot_interval=config.visualization_settings.plot_interval
     ))
     
     from callbacks import NS_JVP_VisualizationCallback
@@ -113,7 +114,8 @@ def main():
         output_dir=os.path.join(directories['plot_dir'], 'jvp'),
         save_to_disk=config.visualization_settings.save_to_disk,
         log_to_neptune=config.visualization_settings.log_to_neptune,
-        num_plots=config.visualization_settings.num_plots
+        num_plots=config.visualization_settings.num_plots,
+        plot_interval=config.visualization_settings.plot_interval
     ))
     
     from callbacks import NS_Inversion_VisualizationCallback
@@ -121,6 +123,8 @@ def main():
         output_dir=os.path.join(directories['plot_dir'], 'ns_inversion'),
         save_to_disk=config.visualization_settings.save_to_disk,
         log_to_neptune=config.visualization_settings.log_to_neptune,
+        num_plots=config.visualization_settings.num_plots,
+        plot_interval=config.visualization_settings.plot_interval
     ))
 
     # Create trainer and set checkpointing to false
@@ -130,7 +134,7 @@ def main():
         callbacks=callbacks,
         log_every_n_steps=1,
         deterministic=True,
-        check_val_every_n_epoch=config.training_settings.check_val_every_n_epoch,
+        check_val_every_n_epoch=config.visualization_settings.check_val_every_n_epoch,
         accumulate_grad_batches=config.training_settings.accum_steps,
         enable_checkpointing=config.training_settings.enable_checkpointing,
     )

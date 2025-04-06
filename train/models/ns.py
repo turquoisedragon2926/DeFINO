@@ -119,33 +119,21 @@ class NSModel(pl.LightningModule):
         """Validation step."""
         x = batch['x']
         y = batch['y']
-        
-        # Forward pass
+
         y_pred = self.model(x)
-        
-        # REL L2 loss
         val_rel_l2_loss = self.relative_l2_loss(y.squeeze(), y_pred.squeeze())
         self.val_rel_l2_loss = val_rel_l2_loss.detach()
-        
-        # Log validation loss
-        self.log('val_rel_l2_loss', val_rel_l2_loss, prog_bar=True, on_epoch=True)
 
-        # JAC loss
-        # v = batch['v']
-        # Jvp = batch['Jvp']
+        v = batch['v']
+        Jvp = batch['Jvp']
         
-        # Jvp_pred = self.compute_Jvp(x, v)
-        # jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
-        # self.log('val_jac_loss', jac_loss, prog_bar=True, on_step=False, on_epoch=True, sync_dist=True)
-        
-        # # Calculate combined loss
-        # combined_loss = val_rel_l2_loss + self.reg_param * jac_loss
-        
-        # # Explicitly log the combined validation loss as well
-        # self.log('val_loss', combined_loss, prog_bar=True, on_step=False, on_epoch=True, sync_dist=True)
+        Jvp_pred = self.compute_Jvp(x, v)
+        jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
+
+        self.log('val_rel_l2_loss', val_rel_l2_loss, prog_bar=True, on_step=True, on_epoch=True)
+        self.log('val_jac_loss', jac_loss, prog_bar=True, on_step=True, on_epoch=True)
         
         return {"val_loss": val_rel_l2_loss}
-
     
     def _clear_memory(self):
         """Clear CUDA memory and run garbage collection."""

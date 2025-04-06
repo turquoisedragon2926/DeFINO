@@ -37,20 +37,20 @@ model_settings:
 
 training_settings:
   accum_steps: 1
-  num_epoch: 4
-  num_train: 10
+  num_epoch: 20
+  num_train: 2
   num_test: 2
-  check_val_every_n_epoch: 1
   enable_checkpointing: true
   log_checkpoint: false # log to neptune (cloud)
   checkpoint_interval: 1
   save_top_k: 1
 
 visualization_settings:
-  plot_interval: 5
   save_to_disk: true
   log_to_neptune: true
   num_plots: 2
+  check_val_every_n_epoch: 10
+  plot_interval: 10
 
 neptune:
   enabled: true
