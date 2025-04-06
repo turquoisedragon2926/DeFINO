@@ -15,7 +15,7 @@ data_settings:
   nx: 128
   ny: 128
   batch_size: 1
-  eigen_count: 1
+  eigen_count: 8
   sample_directories:
     - "/home/ubuntu/DeFINO/datasets/dataset_NS_batch1"
     - "/home/ubuntu/DeFINO/datasets/dataset_NS_batch2"
@@ -29,7 +29,8 @@ model_settings:
   padding: 3
   dimension: 2
   latent_channels: 32
-  loss_type: "L2"  # "L2" / "JAC"
+  loss_type: "JAC"  # "L2" / "JAC"
+  train_eigen_count: 8
   reg_param: 0.5 # not used for L2
   scale_factor: 5500.0 # not used for L2
   learning_rate: 1e-3
@@ -37,9 +38,9 @@ model_settings:
 
 training_settings:
   accum_steps: 1
-  num_epoch: 2
-  num_train: 2
-  num_test: 2
+  num_epoch: 100
+  num_train: 64
+  num_test: 10
   enable_checkpointing: true
   log_checkpoint: false # log to neptune (cloud)
   checkpoint_interval: 1
@@ -49,7 +50,7 @@ visualization_settings:
   save_to_disk: true
   log_to_neptune: false
   num_plots: 2
-  check_val_every_n_epoch: 1
+  check_val_every_n_epoch: 10
   plot_interval: 10
 
 neptune:

@@ -34,6 +34,7 @@ def get_model(model_type: str, model_settings: DictConfig) -> str:
             dimension=model_settings.dimension,
             latent_channels=model_settings.latent_channels,
             loss_type=model_settings.loss_type,
+            train_eigen_count=model_settings.train_eigen_count,
             reg_param=model_settings.reg_param,
             scale_factor=model_settings.scale_factor,
             learning_rate=model_settings.learning_rate,
@@ -109,7 +110,18 @@ def load_config(config_path: str) -> DictConfig:
     Returns:
         Configuration as DictConfig
     """
-    return OmegaConf.load(config_path)
+    config = OmegaConf.load(config_path)
+    if 'base_config' in config:
+        base_config_path = config.pop('base_config')
+        if not os.path.isabs(base_config_path):
+            config_dir = os.path.dirname(config_path)
+            base_config_path = os.path.join(config_dir, base_config_path)
+        
+        base_config = load_config(base_config_path)  # Recursive loading 
+        merged_config = OmegaConf.merge(base_config, config)
+        return merged_config
+    
+    return config
 
 
 def save_config(config: DictConfig, save_path: str) -> None:

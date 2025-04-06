@@ -49,8 +49,7 @@ def main():
     model = get_model(config.experiment.model_type, config.model_settings)
     
     train_loader = data_loader.get_dataloader(offset=0, limit=config.training_settings.num_train, shuffle=False) # TODO: figure out how to set to true & have same plotting in callback
-    test_loader = data_loader.get_dataloader(offset=config.training_settings.num_train, limit=config.training_settings.num_train + config.training_settings.num_test, shuffle=False)
-
+    val_loader = data_loader.get_dataloader(offset=config.training_settings.num_train, limit=config.training_settings.num_test, shuffle=False)
     # Set up loggers
     loggers = []
     
@@ -141,7 +140,7 @@ def main():
     
     # Start training
     logger.info(f"Starting training...")
-    trainer.fit(model, train_loader, test_loader)
+    trainer.fit(model, train_loader, val_loader)
     
     # Save best model path
     best_model_path = checkpoint_callback.best_model_path

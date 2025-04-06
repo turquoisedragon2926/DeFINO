@@ -20,6 +20,7 @@ class NSModel(pl.LightningModule):
         dimension: int = 3,
         latent_channels: int = 64,
         loss_type: str = "L2",
+        train_eigen_count: int = 8,
         reg_param: float = 0.01,
         scale_factor: float = 5500.0, # TODO: Figure out why JJ scaled vJp by 5500.0
         learning_rate: float = 1e-3,
@@ -103,6 +104,10 @@ class NSModel(pl.LightningModule):
         if self.loss_type == "JAC":
             v = batch['v']
             Jvp = batch['Jvp']
+            
+            # Get the train eigencount eigenvectors
+            v = v[:, :, :, :self.train_eigen_count]
+            Jvp = Jvp[:, :, :, :self.train_eigen_count]
             
             Jvp_pred = self.compute_Jvp(x, v)
             jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
