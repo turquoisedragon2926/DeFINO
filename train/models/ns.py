@@ -64,6 +64,7 @@ class NSModel(pl.LightningModule):
         self.loss_type = loss_type
         self.reg_param = reg_param
         self.scale_factor = scale_factor
+        self.train_eigen_count = train_eigen_count
         
         # For tracking loss metrics
         self.train_rel_l2_loss = 0.0
