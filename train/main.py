@@ -3,13 +3,9 @@ import argparse
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
-
-from model import GCSModel
-from dataset import GCSDataLoader
-from callbacks import SaturationVisualizationCallback, JacobianVisualizationCallback
 from utils import (
     load_config, save_config, setup_logging, setup_neptune_logging,
-    create_directories, log_config_to_file, set_seed
+    create_directories, log_config_to_file, set_seed, get_dataset, get_model
 )
 
 try:
@@ -48,41 +44,12 @@ def main():
     
     # Set up Neptune logging if enabled
     neptune_run = setup_neptune_logging(config)
+        
+    data_loader = get_dataset(config.experiment.dataset_type, config.data_settings)
+    model = get_model(config.experiment.model_type, config.model_settings)
     
-    # Create train loader
-    data_loader = GCSDataLoader(
-        k_file=config.data.k_file,
-        states_dir=config.data.states_dir,
-        vjp_dir=config.data.vjp_dir,
-        eigvec_dir=config.data.eigvec_dir,
-        batch_size=config.training.batch_size,
-        nt=config.data.nt,
-        nx=config.data.nx,
-        ny=config.data.ny,
-        num_vec=config.data.num_vec,
-        num_workers=config.training.num_workers
-    )
-    
-    train_loader = data_loader.get_dataloader(offset=0, limit=config.data.num_train, shuffle=False) # TODO: figure out how to set to true & have same plotting in callback
-    test_loader = data_loader.get_dataloader(offset=config.data.num_train, limit=config.data.num_test, shuffle=False)
-
-    # Create model
-    model = GCSModel(
-        in_channels=config.model.in_channels,
-        out_channels=config.model.out_channels,
-        decoder_layer_size=config.model.decoder_layer_size,
-        num_fno_layers=config.model.num_fno_layers,
-        num_fno_modes=config.model.num_fno_modes,
-        padding=config.model.padding,
-        dimension=config.model.dimension,
-        latent_channels=config.model.latent_channels,
-        loss_type=config.training.loss_type,
-        reg_param=config.training.reg_param,
-        scale_factor=config.training.scale_factor,
-        learning_rate=config.training.learning_rate,
-        weight_decay=config.training.weight_decay
-    )
-    
+    train_loader = data_loader.get_dataloader(offset=0, limit=config.training_settings.num_train, shuffle=config.training_settings.shuffle_train) # TODO: figure out how to set to true & have same plotting in callback
+    val_loader = data_loader.get_dataloader(offset=config.training_settings.num_train, limit=config.training_settings.num_test, shuffle=config.training_settings.shuffle_test)
     # Set up loggers
     loggers = []
     
@@ -98,7 +65,7 @@ def main():
     if NEPTUNE_AVAILABLE and config.neptune.enabled:
         neptune_logger = NeptuneLogger(
             run=neptune_run,
-            log_model_checkpoints=config.training.log_checkpoint
+            log_model_checkpoints=config.training_settings.log_checkpoint
         )
         loggers.append(neptune_logger)
     
@@ -108,14 +75,14 @@ def main():
     # Model checkpoint callback
     checkpoint_callback = ModelCheckpoint(
         dirpath=directories['checkpoint_dir'],
-        filename=f"GCS_{{epoch:03d}}_{{val_rel_l2_loss:.4f}}",
+        filename=f"{config.experiment.name}_{{epoch:03d}}_{{val_rel_l2_loss:.4f}}",
         monitor="val_rel_l2_loss",
-        save_top_k=config.training.save_top_k,
+        save_top_k=config.training_settings.save_top_k,
         mode="min",
-        save_last=True,
-        every_n_epochs=config.training.checkpoint_interval
+        save_last=False,
+        every_n_epochs=config.training_settings.checkpoint_interval
     )
-    if config.training.enable_checkpointing:
+    if config.training_settings.enable_checkpointing:
         callbacks.append(checkpoint_callback)
     
     # Early stopping callback
@@ -125,44 +92,55 @@ def main():
         min_delta=1e-4,
         mode="min"
     )
-    callbacks.append(early_stopping_callback)
+    # callbacks.append(early_stopping_callback) # TODO: Fix whatever is causing error
     
     # Learning rate monitor
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     callbacks.append(lr_monitor)
     
-    # Visualization callbacks
-    saturation_viz_callback = SaturationVisualizationCallback(
-        output_dir=directories['plot_sat_dir'],
-        log_to_neptune=config.visualization.log_to_neptune,
-        save_to_disk=config.visualization.save_to_disk,
-        num_plots=config.visualization.num_plots
-    )
-    callbacks.append(saturation_viz_callback)
+    # TODO: Make callbacks dynamic based on config / dataset type
+    from callbacks import NSVisualizationCallback
+    callbacks.append(NSVisualizationCallback(
+        output_dir=os.path.join(directories['plot_dir'], 'forward'),
+        save_to_disk=config.visualization_settings.save_to_disk,
+        log_to_neptune=config.visualization_settings.log_to_neptune,
+        num_plots=config.visualization_settings.num_plots,
+        plot_interval=config.visualization_settings.plot_interval
+    ))
     
-    jacobian_viz_callback = JacobianVisualizationCallback(
-        output_dir=directories['plot_jac_dir'],
-        log_to_neptune=config.visualization.log_to_neptune,
-        save_to_disk=config.visualization.save_to_disk,
-        num_plots=config.visualization.num_plots
-    )
-    callbacks.append(jacobian_viz_callback)
+    from callbacks import NS_JVP_VisualizationCallback
+    callbacks.append(NS_JVP_VisualizationCallback(
+        output_dir=os.path.join(directories['plot_dir'], 'jvp'),
+        save_to_disk=config.visualization_settings.save_to_disk,
+        log_to_neptune=config.visualization_settings.log_to_neptune,
+        num_plots=config.visualization_settings.num_plots,
+        plot_interval=config.visualization_settings.plot_interval
+    ))
+    
+    from callbacks import NS_Inversion_VisualizationCallback
+    callbacks.append(NS_Inversion_VisualizationCallback(
+        output_dir=os.path.join(directories['plot_dir'], 'ns_inversion'),
+        save_to_disk=config.visualization_settings.save_to_disk,
+        log_to_neptune=config.visualization_settings.log_to_neptune,
+        num_plots=config.visualization_settings.num_plots,
+        plot_interval=config.visualization_settings.plot_interval
+    ))
 
     # Create trainer and set checkpointing to false
     trainer = pl.Trainer(
-        max_epochs=config.training.num_epoch,
+        max_epochs=config.training_settings.num_epoch,
         logger=loggers,
         callbacks=callbacks,
         log_every_n_steps=1,
-        check_val_every_n_epoch=config.training.check_val_every_n_epoch,
-        accumulate_grad_batches=config.training.accum_steps,
         deterministic=True,
-        enable_checkpointing=config.training.enable_checkpointing,
+        check_val_every_n_epoch=config.visualization_settings.check_val_every_n_epoch,
+        accumulate_grad_batches=config.training_settings.accum_steps,
+        enable_checkpointing=config.training_settings.enable_checkpointing,
     )
     
     # Start training
-    logger.info(f"Starting training with {config.training.loss_type} loss")
-    trainer.fit(model, train_loader, test_loader)
+    logger.info(f"Starting training...")
+    trainer.fit(model, train_loader, val_loader)
     
     # Save best model path
     best_model_path = checkpoint_callback.best_model_path

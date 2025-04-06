@@ -17,6 +17,50 @@ try:
 except ImportError:
     NEPTUNE_AVAILABLE = False
 
+def get_model(model_type: str, model_settings: DictConfig) -> str:
+    if model_type == "GCS":
+        from models.gcs import GCSModel
+        model = GCSModel() # Non Functional Model. Reimplement call if needed. (Removed due to vJp -> Jvp)
+        return model
+    elif model_type == "NS":
+        from models.ns import NSModel
+        model = NSModel(
+            in_channels=model_settings.in_channels,
+            out_channels=model_settings.out_channels,
+            decoder_layer_size=model_settings.decoder_layer_size,
+            num_fno_layers=model_settings.num_fno_layers,
+            num_fno_modes=model_settings.num_fno_modes,
+            padding=model_settings.padding,
+            dimension=model_settings.dimension,
+            latent_channels=model_settings.latent_channels,
+            loss_type=model_settings.loss_type,
+            train_eigen_count=model_settings.train_eigen_count,
+            reg_param=model_settings.reg_param,
+            scale_factor=model_settings.scale_factor,
+            learning_rate=model_settings.learning_rate,
+            weight_decay=model_settings.weight_decay,
+        )
+        return model
+    else:
+        raise ValueError(f"Invalid model type: {model_type}")
+
+def get_dataset(dataset_type: str, data_settings: DictConfig) -> str:
+    if dataset_type == "GCS":
+        from datasets.gcs import GCSDataLoader
+        data_loader = GCSDataLoader() # Non Functional Data Loader. Reimplement call if needed. (Removed due to vJp -> Jvp)
+        return data_loader
+    elif dataset_type == "NS":
+        from datasets.ns import NSDataLoader
+        data_loader = NSDataLoader(
+            nx=data_settings.nx,
+            ny=data_settings.ny,
+            eigen_count=data_settings.eigen_count,
+            sample_directories=data_settings.sample_directories,
+            batch_size=data_settings.batch_size,
+        )
+        return data_loader
+    else:
+        raise ValueError(f"Invalid dataset type: {dataset_type}")
 
 def setup_logging(log_dir: str = "logs", experiment_name: Optional[str] = None) -> Tuple[str, logging.Logger]:
     """
@@ -66,7 +110,18 @@ def load_config(config_path: str) -> DictConfig:
     Returns:
         Configuration as DictConfig
     """
-    return OmegaConf.load(config_path)
+    config = OmegaConf.load(config_path)
+    if 'base_config' in config:
+        base_config_path = config.pop('base_config')
+        if not os.path.isabs(base_config_path):
+            config_dir = os.path.dirname(config_path)
+            base_config_path = os.path.join(config_dir, base_config_path)
+        
+        base_config = load_config(base_config_path)  # Recursive loading 
+        merged_config = OmegaConf.merge(base_config, config)
+        return merged_config
+    
+    return config
 
 
 def save_config(config: DictConfig, save_path: str) -> None:
@@ -98,7 +153,7 @@ def setup_neptune_logging(config: DictConfig) -> Optional[Any]:
     neptune_run = neptune.init_run(
         project=config.neptune.project,
         name=config.experiment.name,
-        tags=[config.training.loss_type],
+        tags=list(config.experiment.tags),
         capture_stdout=True,
         capture_stderr=True
     )
@@ -127,8 +182,6 @@ def create_directories(config: DictConfig) -> Dict[str, str]:
         "output_dir": os.path.join(config.experiment.output_dir, experiment_name),
         "checkpoint_dir": os.path.join(config.experiment.checkpoint_dir, experiment_name),
         "plot_dir": os.path.join(config.experiment.output_dir, experiment_name, "plots"),
-        "plot_sat_dir": os.path.join(config.experiment.output_dir, experiment_name, "plots", "saturation"),
-        "plot_jac_dir": os.path.join(config.experiment.output_dir, experiment_name, "plots", "jacobian"),
     }
     
     # Create directories

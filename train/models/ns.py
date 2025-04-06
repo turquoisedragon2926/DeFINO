@@ -6,8 +6,8 @@ from typing import Dict, Any, Optional, Tuple
 import gc  # Add import for garbage collection
 
 
-class GCSModel(pl.LightningModule):
-    """PyTorch Lightning module for GCS saturation prediction with optional Jacobian regularization."""
+class NSModel(pl.LightningModule):
+    """PyTorch Lightning module for NS saturation prediction with optional Jacobian regularization."""
     
     def __init__(
         self,
@@ -19,15 +19,16 @@ class GCSModel(pl.LightningModule):
         padding: int = 3,
         dimension: int = 3,
         latent_channels: int = 64,
-        loss_type: str = "MSE",
+        loss_type: str = "L2",
+        train_eigen_count: int = 8,
         reg_param: float = 0.01,
-        scale_factor: float = 5500.0,
+        scale_factor: float = 5500.0, # TODO: Figure out why JJ scaled vJp by 5500.0
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         **kwargs
     ):
         """
-        Initialize the GCS model.
+        Initialize the NS model.
         
         Args:
             in_channels: Number of input channels
@@ -38,7 +39,7 @@ class GCSModel(pl.LightningModule):
             padding: Padding size
             dimension: Input dimension (3 for spacetime)
             latent_channels: Number of latent channels
-            loss_type: Loss type to use (MSE, JAC)
+            loss_type: Loss type to use (L2, JAC)
             reg_param: Regularization parameter for Jacobian loss
             scale_factor: Scale factor for Jacobian loss
             learning_rate: Learning rate for optimizer
@@ -63,65 +64,28 @@ class GCSModel(pl.LightningModule):
         self.loss_type = loss_type
         self.reg_param = reg_param
         self.scale_factor = scale_factor
+        self.train_eigen_count = train_eigen_count
         
         # For tracking loss metrics
         self.train_rel_l2_loss = 0.0
-        self.train_mse_loss = 0.0
         self.val_rel_l2_loss = 0.0
-        self.jac_loss = 0.0
     
     def forward(self, x):
         """Forward pass through the model."""
         return self.model(x)
     
-    def compute_vjps(self, x, v, clear_memory=False):
-        """
-        Compute vector-Jacobian products.
-        
-        Args:
-            x: Input tensor
-            v: Vector tensor for VJP calculation
-            clear_memory: Whether to clear memory during computation
-            
-        Returns:
-            Tensor of vector-Jacobian products
-        """
-        # Prepare results tensor
-        vjp_out = torch.empty(
-            v.shape, 
-            device=x.device, 
-            dtype=x.dtype
-        )
-        
-        nt = v.shape[1]
-        nv = v.shape[2]
-        
-        if clear_memory:
-            self._clear_memory()
-
-        output, vjp_func = torch.func.vjp(self.model, x)
-        
-        # Now apply vjp_func to each vector
-        for j in range(nv):
-            cur_v = v[:, :, j].unsqueeze(1)
-            vjp_result = vjp_func(cur_v)[0]
-            vjp_out[:, :, j] = vjp_result
-        
-        if clear_memory:
-            self._clear_memory()
-        
-        return vjp_out
-    
-    def _clear_memory(self):
-        """Clear CUDA memory and run garbage collection."""
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        gc.collect()
-    
     def relative_l2_loss(self, true, pred):
         """Relative L2 loss."""
         return torch.norm(true - pred) / torch.norm(true)
-    
+
+    def compute_Jvp(self, x, v):
+        Jvp = torch.zeros_like(v)
+        for eig_idx in range(v.shape[-1]):
+            jvp_value, _ = torch.autograd.functional.jvp(self.forward, x, v[:, :, :, eig_idx].unsqueeze(0), create_graph=True)
+            Jvp[:, :, :, eig_idx] = jvp_value.squeeze()
+        x.requires_grad_(False)
+        return Jvp
+
     def training_step(self, batch, batch_idx):
         """Training step."""
         x = batch['x']
@@ -132,79 +96,58 @@ class GCSModel(pl.LightningModule):
         rel_l2_loss = self.relative_l2_loss(y.squeeze(), output.squeeze())
         self.train_rel_l2_loss = rel_l2_loss.detach()
         
-        # MSE loss
-        mse_loss = torch.mean((y.squeeze() - output.squeeze()) ** 2)
-        self.train_mse_loss = mse_loss.detach()
-        
         # Total loss (default to REL L2)
         loss = rel_l2_loss
         
         # Log loss
         self.log('train_rel_l2_loss', rel_l2_loss, prog_bar=True, on_step=True, on_epoch=True)
-        self.log('train_mse_loss', mse_loss, prog_bar=True, on_step=True, on_epoch=True)
+
+        v = batch['v']
+        Jvp = batch['Jvp']
+            
+        # Get the train eigencount eigenvectors
+        v = v[:, :, :, :self.train_eigen_count]
+        Jvp = Jvp[:, :, :, :self.train_eigen_count]
         
-        if 'eigvec' in batch and 'vjp' in batch:
-            vjp_out = self.compute_vjps(x, batch['eigvec'])
-            true_vjp = batch['vjp']
+        Jvp_pred = self.compute_Jvp(x, v)
+        jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
             
-            jac_loss = self.relative_l2_loss(true_vjp * self.scale_factor, vjp_out * self.scale_factor)
-            self.jac_loss = jac_loss.detach()
+        # TODO: Remove this for GCS / harder to compute Jvp problems
+        if self.loss_type == "JAC":
+            loss = rel_l2_loss + self.reg_param * jac_loss
             
-            if self.loss_type == "JAC":
-                loss += jac_loss * self.reg_param
-            
-            # Log Jacobian loss
-            self.log('train_jac_loss', jac_loss, prog_bar=True, on_step=True, on_epoch=True)
-        
+        self.train_jac_loss = jac_loss.detach()
+        self.log('train_jac_loss', jac_loss, prog_bar=True, on_step=True, on_epoch=True)
+
         # Log total loss
         self.log('train_loss', loss, prog_bar=True, on_step=True, on_epoch=True)
         return loss
-    
-    def on_train_epoch_end(self):
-        """Called at the end of training epoch."""
-        # Clear memory at the end of each epoch
-        self._clear_memory()
     
     def validation_step(self, batch, batch_idx):
         """Validation step."""
         x = batch['x']
         y = batch['y']
-        
-        # Forward pass
+
         y_pred = self.model(x)
-        
-        # REL L2 loss
         val_rel_l2_loss = self.relative_l2_loss(y.squeeze(), y_pred.squeeze())
         self.val_rel_l2_loss = val_rel_l2_loss.detach()
+
+        v = batch['v']
+        Jvp = batch['Jvp']
         
-        # Log validation loss
-        self.log('val_rel_l2_loss', val_rel_l2_loss, prog_bar=True, on_epoch=True)
+        Jvp_pred = self.compute_Jvp(x, v)
+        jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
+
+        self.log('val_rel_l2_loss', val_rel_l2_loss, prog_bar=True, on_step=True, on_epoch=True)
+        self.log('val_jac_loss', jac_loss, prog_bar=True, on_step=True, on_epoch=True)
         
-        # Clear memory after validation step
-        if batch_idx % 5 == 0:  # Clear memory every 5 batches during validation
-            self._clear_memory()
-        
-        return {'val_loss': val_rel_l2_loss}
+        return {"val_loss": val_rel_l2_loss}
     
-    def test_step(self, batch, batch_idx):
-        """Test step."""
-        x = batch['x']
-        y = batch['y']
-        
-        # Forward pass
-        y_pred = self.model(x)
-        
-        # REL L2 loss
-        test_rel_l2_loss = self.relative_l2_loss(y.squeeze(), y_pred.squeeze())
-        
-        # Log test loss
-        self.log('test_rel_l2_loss', test_rel_l2_loss, on_epoch=True)
-        
-        # Clear memory after test step
-        if batch_idx % 5 == 0:  # Clear memory every 5 batches during testing
-            self._clear_memory()
-        
-        return {'test_loss': test_rel_l2_loss}
+    def _clear_memory(self):
+        """Clear CUDA memory and run garbage collection."""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
     
     def on_train_epoch_end(self):
         """Called at the end of training epoch."""
@@ -224,4 +167,16 @@ class GCSModel(pl.LightningModule):
             weight_decay=self.hparams.weight_decay
         )
         
-        return optimizer 
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=100,
+            gamma=0.99
+        )
+        
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step"
+            }
+        }
