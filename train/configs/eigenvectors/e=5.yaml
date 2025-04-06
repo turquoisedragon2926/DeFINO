@@ -1,10 +1,10 @@
 base_config: ../ns_default.yaml
 
 experiment:
-  name: "n=64_e=5_m=FNO_s=RFS_l=JAC"
+  name: "n=128_e=5_m=FNO_s=RFS_l=JAC"
   tags:
     - "5 Eigenvectors"
-    - "64 samples"
+    - "128 samples"
     - "FNO"
     - "RFS"
     - "JAC"

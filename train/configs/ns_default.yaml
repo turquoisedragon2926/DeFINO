@@ -39,7 +39,7 @@ model_settings:
 training_settings:
   accum_steps: 1
   num_epoch: 100
-  num_train: 64
+  num_train: 128
   num_test: 10
   enable_checkpointing: true
   log_checkpoint: false # log to neptune (cloud)
