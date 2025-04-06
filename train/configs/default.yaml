@@ -15,7 +15,7 @@ data_settings:
   nx: 128
   ny: 128
   batch_size: 1
-  eigen_count: 8
+  eigen_count: 1
   sample_directories:
     - "/home/ubuntu/DeFINO/datasets/dataset_NS_batch1"
     - "/home/ubuntu/DeFINO/datasets/dataset_NS_batch2"
@@ -37,7 +37,7 @@ model_settings:
 
 training_settings:
   accum_steps: 1
-  num_epoch: 20
+  num_epoch: 2
   num_train: 2
   num_test: 2
   enable_checkpointing: true
@@ -47,9 +47,9 @@ training_settings:
 
 visualization_settings:
   save_to_disk: true
-  log_to_neptune: true
+  log_to_neptune: false
   num_plots: 2
-  check_val_every_n_epoch: 10
+  check_val_every_n_epoch: 1
   plot_interval: 10
 
 neptune:

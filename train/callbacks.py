@@ -438,7 +438,7 @@ class NSVisualizationCallback(BaseVisualizationCallback):
             fig = self.plot_ns_data(x, y, pred_Jvp)
             filename = f"ns_{tag}_sample_{batch['idx'][batch_idx]}_epoch_{trainer.current_epoch}.png"
             self.save_figure(fig, filename)
-            self.log_figure(trainer, pl_module, fig, f"{tag}/sample_{batch['idx'][batch_idx]}/ns", trainer.current_epoch)
+            self.log_figure(trainer, pl_module, fig, f"{tag}/sample_{batch['idx'][batch_idx]}/forward", trainer.current_epoch)
             plt.close(fig)
 
 class NS_JVP_VisualizationCallback(BaseVisualizationCallback):
@@ -455,16 +455,18 @@ class NS_JVP_VisualizationCallback(BaseVisualizationCallback):
             self.plot_jvp_results(trainer, pl_module, trainer.val_dataloaders, "val")
             
     def plot_jvp_data(self, v, Jvp, pred_Jvp):
-        fig, axes = plt.subplots(4, 4, figsize=(15, 15))
         
-        v = v.squeeze().cpu().numpy()
-        Jvp = Jvp.squeeze().cpu().numpy()
-        pred_Jvp = pred_Jvp.squeeze().cpu().numpy()
+        v = v.squeeze(0).cpu().numpy()
+        Jvp = Jvp.squeeze(0).cpu().numpy()
+        pred_Jvp = pred_Jvp.squeeze(0).cpu().numpy()
 
         vmin = min(np.min(Jvp), np.min(pred_Jvp))
         vmax = max(np.max(Jvp), np.max(pred_Jvp))
         
-        for eig_idx in range(4):
+        cols = min(4, Jvp.shape[2])    
+        fig, axes = plt.subplots(4, 4, figsize=(15, 15))    
+        
+        for eig_idx in range(cols):
             x_np = v[:, :, eig_idx]
             y_np = Jvp[:, :, eig_idx] 
             pred_np = pred_Jvp[:, :, eig_idx]
@@ -561,7 +563,7 @@ class NS_Inversion_VisualizationCallback(BaseVisualizationCallback):
         fig.colorbar(im2, ax=axes[3], fraction=0.046, pad=0.04)
         
         # Row 5
-        im3 = axes[4].imshow(np.abs(y - x_pred), cmap='magma')
+        im3 = axes[4].imshow(np.abs(x - x_pred), cmap='magma')
         axes[4].set_title('Error')
         fig.colorbar(im3, ax=axes[4], fraction=0.046, pad=0.04)
         

@@ -38,8 +38,8 @@ class CustomDataset(torch.utils.data.Dataset):
         item = {
             'x': x.reshape(1, self.nx, self.ny),
             'y': y.reshape(1, self.nx, self.ny),
-            'Jvp': Jvp.reshape(self.nx, self.ny, self.eigen_count),
-            'v': v.reshape(self.nx, self.ny, self.eigen_count),
+            'Jvp': Jvp.reshape(self.nx, self.ny, -1)[:, :, :self.eigen_count],
+            'v': v.reshape(self.nx, self.ny, -1)[:, :, :self.eigen_count],
             'sample_path': self.sample_paths[idx],
             'idx': id_str
         }
