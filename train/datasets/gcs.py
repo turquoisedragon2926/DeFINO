@@ -4,7 +4,6 @@ import numpy as np
 import h5py
 from typing import Optional, Dict, Any, List, Tuple
 from torch.utils.data import Dataset, DataLoader
-import pytorch_lightning as pl
 
 
 class CustomDataset(torch.utils.data.Dataset):

@@ -13,6 +13,22 @@ try:
 except ImportError:
     NEPTUNE_AVAILABLE = False
 
+    # # Visualization callbacks
+    # saturation_viz_callback = SaturationVisualizationCallback(
+    #     output_dir=directories['plot_sat_dir'],
+    #     log_to_neptune=config.visualization_settings.log_to_neptune,
+    #     save_to_disk=config.visualization_settings.save_to_disk,
+    #     num_plots=config.visualization_settings.num_plots
+    # )
+    # callbacks.append(saturation_viz_callback)
+    
+    # jacobian_viz_callback = JacobianVisualizationCallback(
+    #     output_dir=directories['plot_jac_dir'],
+    #     log_to_neptune=config.visualization_settings.log_to_neptune,
+    #     save_to_disk=config.visualization_settings.save_to_disk,
+    #     num_plots=config.visualization_settings.num_plots
+    # )
+    # callbacks.append(jacobian_viz_callback)
 
 class BaseVisualizationCallback(Callback):
     """Base class for visualization callbacks."""

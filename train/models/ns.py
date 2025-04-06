@@ -6,8 +6,8 @@ from typing import Dict, Any, Optional, Tuple
 import gc  # Add import for garbage collection
 
 
-class GCSModel(pl.LightningModule):
-    """PyTorch Lightning module for GCS saturation prediction with optional Jacobian regularization."""
+class NSModel(pl.LightningModule):
+    """PyTorch Lightning module for NS saturation prediction with optional Jacobian regularization."""
     
     def __init__(
         self,
@@ -74,50 +74,6 @@ class GCSModel(pl.LightningModule):
         """Forward pass through the model."""
         return self.model(x)
     
-    def compute_vjps(self, x, v, clear_memory=False):
-        """
-        Compute vector-Jacobian products.
-        
-        Args:
-            x: Input tensor
-            v: Vector tensor for VJP calculation
-            clear_memory: Whether to clear memory during computation
-            
-        Returns:
-            Tensor of vector-Jacobian products
-        """
-        # Prepare results tensor
-        vjp_out = torch.empty(
-            v.shape, 
-            device=x.device, 
-            dtype=x.dtype
-        )
-        
-        nt = v.shape[1]
-        nv = v.shape[2]
-        
-        if clear_memory:
-            self._clear_memory()
-
-        output, vjp_func = torch.func.vjp(self.model, x)
-        
-        # Now apply vjp_func to each vector
-        for j in range(nv):
-            cur_v = v[:, :, j].unsqueeze(1)
-            vjp_result = vjp_func(cur_v)[0]
-            vjp_out[:, :, j] = vjp_result
-        
-        if clear_memory:
-            self._clear_memory()
-        
-        return vjp_out
-    
-    def _clear_memory(self):
-        """Clear CUDA memory and run garbage collection."""
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        gc.collect()
-    
     def relative_l2_loss(self, true, pred):
         """Relative L2 loss."""
         return torch.norm(true - pred) / torch.norm(true)
@@ -142,28 +98,12 @@ class GCSModel(pl.LightningModule):
         # Log loss
         self.log('train_rel_l2_loss', rel_l2_loss, prog_bar=True, on_step=True, on_epoch=True)
         self.log('train_mse_loss', mse_loss, prog_bar=True, on_step=True, on_epoch=True)
-        
-        if 'eigvec' in batch and 'vjp' in batch:
-            vjp_out = self.compute_vjps(x, batch['eigvec'])
-            true_vjp = batch['vjp']
+
+        # TODO: Add Jacobian loss
             
-            jac_loss = self.relative_l2_loss(true_vjp * self.scale_factor, vjp_out * self.scale_factor)
-            self.jac_loss = jac_loss.detach()
-            
-            if self.loss_type == "JAC":
-                loss += jac_loss * self.reg_param
-            
-            # Log Jacobian loss
-            self.log('train_jac_loss', jac_loss, prog_bar=True, on_step=True, on_epoch=True)
-        
         # Log total loss
         self.log('train_loss', loss, prog_bar=True, on_step=True, on_epoch=True)
         return loss
-    
-    def on_train_epoch_end(self):
-        """Called at the end of training epoch."""
-        # Clear memory at the end of each epoch
-        self._clear_memory()
     
     def validation_step(self, batch, batch_idx):
         """Validation step."""
@@ -180,31 +120,13 @@ class GCSModel(pl.LightningModule):
         # Log validation loss
         self.log('val_rel_l2_loss', val_rel_l2_loss, prog_bar=True, on_epoch=True)
         
-        # Clear memory after validation step
-        if batch_idx % 5 == 0:  # Clear memory every 5 batches during validation
-            self._clear_memory()
-        
         return {'val_loss': val_rel_l2_loss}
-    
-    def test_step(self, batch, batch_idx):
-        """Test step."""
-        x = batch['x']
-        y = batch['y']
         
-        # Forward pass
-        y_pred = self.model(x)
-        
-        # REL L2 loss
-        test_rel_l2_loss = self.relative_l2_loss(y.squeeze(), y_pred.squeeze())
-        
-        # Log test loss
-        self.log('test_rel_l2_loss', test_rel_l2_loss, on_epoch=True)
-        
-        # Clear memory after test step
-        if batch_idx % 5 == 0:  # Clear memory every 5 batches during testing
-            self._clear_memory()
-        
-        return {'test_loss': test_rel_l2_loss}
+    def _clear_memory(self):
+        """Clear CUDA memory and run garbage collection."""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
     
     def on_train_epoch_end(self):
         """Called at the end of training epoch."""
@@ -224,4 +146,4 @@ class GCSModel(pl.LightningModule):
             weight_decay=self.hparams.weight_decay
         )
         
-        return optimizer 
+        return optimizer

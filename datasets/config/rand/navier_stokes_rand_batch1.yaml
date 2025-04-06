@@ -1,0 +1,31 @@
+experiment:
+  name: "Navier Stokes Random Generation"
+  seed: 42
+  simulator_type: "NS"
+  reduced_model_type: "RAND" # "FIM" or "RAND"
+  output_dir: "datasets/dataset_NS_rand_batch1"
+
+viz_settings:
+  plot_interval: 1
+  plot_vector_count: 1
+  plots_dir: "datasets/dataset_NS_rand_batch1/plots"
+
+data_settings:
+  num_samples: 50
+  num_workers: 1
+  data_dir: "datasets/dataset_NS_rand_batch1/samples"
+
+simulator_settings:
+  s1: 128 # Grid size
+  s2: 128 # Grid size
+  scale: 10.0
+  T: 0.1
+  Re: 100
+  adaptive: True
+  delta_t: 1e-3
+  nburn: 20
+  nsteps: 180
+
+reduced_model_settings:
+  eigen_value_fraction: 0.01
+  eigen_vector_count: 8 # Overrides eigen_value_fraction if set
