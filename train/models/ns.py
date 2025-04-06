@@ -102,20 +102,22 @@ class NSModel(pl.LightningModule):
         # Log loss
         self.log('train_rel_l2_loss', rel_l2_loss, prog_bar=True, on_step=True, on_epoch=True)
 
+        v = batch['v']
+        Jvp = batch['Jvp']
+            
+        # Get the train eigencount eigenvectors
+        v = v[:, :, :, :self.train_eigen_count]
+        Jvp = Jvp[:, :, :, :self.train_eigen_count]
+        
+        Jvp_pred = self.compute_Jvp(x, v)
+        jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
+            
+        # TODO: Remove this for GCS / harder to compute Jvp problems
         if self.loss_type == "JAC":
-            v = batch['v']
-            Jvp = batch['Jvp']
-            
-            # Get the train eigencount eigenvectors
-            v = v[:, :, :, :self.train_eigen_count]
-            Jvp = Jvp[:, :, :, :self.train_eigen_count]
-            
-            Jvp_pred = self.compute_Jvp(x, v)
-            jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
             loss = rel_l2_loss + self.reg_param * jac_loss
             
-            self.train_jac_loss = jac_loss.detach()
-            self.log('train_jac_loss', jac_loss, prog_bar=True, on_step=True, on_epoch=True)
+        self.train_jac_loss = jac_loss.detach()
+        self.log('train_jac_loss', jac_loss, prog_bar=True, on_step=True, on_epoch=True)
 
         # Log total loss
         self.log('train_loss', loss, prog_bar=True, on_step=True, on_epoch=True)
@@ -165,4 +167,16 @@ class NSModel(pl.LightningModule):
             weight_decay=self.hparams.weight_decay
         )
         
-        return optimizer
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=100,
+            gamma=0.99
+        )
+        
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step"
+            }
+        }

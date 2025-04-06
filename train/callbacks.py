@@ -61,7 +61,7 @@ class SaturationVisualizationCallback(BaseVisualizationCallback):
     
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
-        if trainer.current_epoch % self.plot_interval == 0:
+        if (trainer.current_epoch - 1) % self.plot_interval == 0:
             self.plot_saturation_results(trainer, pl_module, trainer.train_dataloader, "train")
     
     def on_validation_epoch_end(self, trainer, pl_module):
@@ -196,7 +196,7 @@ class JacobianVisualizationCallback(BaseVisualizationCallback):
     
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
-        if trainer.current_epoch % self.plot_interval == 0:
+        if (trainer.current_epoch - 1) % self.plot_interval == 0:
             self.plot_jacobian_results(trainer, pl_module, trainer.train_dataloader, "train")
     
     def on_validation_epoch_end(self, trainer, pl_module):
@@ -371,7 +371,7 @@ class NSVisualizationCallback(BaseVisualizationCallback):
     
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
-        if trainer.current_epoch % self.plot_interval == 0:
+        if (trainer.current_epoch - 1) % self.plot_interval == 0:
             self.plot_ns_results(trainer, pl_module, trainer.train_dataloader, "train")
         
     def on_validation_epoch_end(self, trainer, pl_module):
@@ -446,7 +446,7 @@ class NS_JVP_VisualizationCallback(BaseVisualizationCallback):
     
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
-        if trainer.current_epoch % self.plot_interval == 0:
+        if (trainer.current_epoch - 1) % self.plot_interval == 0:
             self.plot_jvp_results(trainer, pl_module, trainer.train_dataloader, "train")
         
     def on_validation_epoch_end(self, trainer, pl_module):

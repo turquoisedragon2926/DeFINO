@@ -10,4 +10,4 @@ experiment:
     - "JAC"
 
 training_settings:
-  num_samples: 8
+  num_train: 8

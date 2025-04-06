@@ -48,8 +48,8 @@ def main():
     data_loader = get_dataset(config.experiment.dataset_type, config.data_settings)
     model = get_model(config.experiment.model_type, config.model_settings)
     
-    train_loader = data_loader.get_dataloader(offset=0, limit=config.training_settings.num_train, shuffle=False) # TODO: figure out how to set to true & have same plotting in callback
-    val_loader = data_loader.get_dataloader(offset=config.training_settings.num_train, limit=config.training_settings.num_test, shuffle=False)
+    train_loader = data_loader.get_dataloader(offset=0, limit=config.training_settings.num_train, shuffle=config.training_settings.shuffle_train) # TODO: figure out how to set to true & have same plotting in callback
+    val_loader = data_loader.get_dataloader(offset=config.training_settings.num_train, limit=config.training_settings.num_test, shuffle=config.training_settings.shuffle_test)
     # Set up loggers
     loggers = []
     
