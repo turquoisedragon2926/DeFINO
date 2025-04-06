@@ -1,0 +1,17 @@
+base_config: ../ns_default.yaml
+
+experiment:
+  name: "n=128_e=8_m=FNO_s=RAND_l=JAC"
+  tags:
+    - "8 Eigenvectors"
+    - "128 samples"
+    - "FNO"
+    - "RAND"
+    - "JAC"
+
+data_settings:
+  sample_directories:
+    - "/home/ubuntu/DeFINO/datasets/dataset_NS_rand_batch1"
+    - "/home/ubuntu/DeFINO/datasets/dataset_NS_rand_batch2"
+    - "/home/ubuntu/DeFINO/datasets/dataset_NS_rand_batch3"
+    - "/home/ubuntu/DeFINO/datasets/dataset_NS_rand_batch4"

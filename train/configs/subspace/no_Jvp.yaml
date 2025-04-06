@@ -1,0 +1,11 @@
+base_config: ../ns_default.yaml
+
+experiment:
+  name: "n=128_m=FNO_l=L2"
+  tags:
+    - "128 samples"
+    - "FNO"
+    - "L2"
+
+model_settings:
+  loss_type: "L2"

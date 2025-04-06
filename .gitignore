@@ -26,3 +26,11 @@
 /plot/
 /test_result/
 
+# metadata
+/output/
+/logs/
+/checkpoints/
+/.neptune/
+__pycache__/
+.env
+/datasets/dataset_*

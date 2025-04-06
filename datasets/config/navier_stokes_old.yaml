@@ -1,0 +1,28 @@
+experiment:
+  name: "Navier Stokes Generation"
+  seed: 42 # TODO: seed is not working. fix
+  simulator_type: "OldNS"
+  reduced_model_type: "RAND" # "FIM" or "RAND"
+  output_dir: "datasets/dataset_NS_old"
+
+viz_settings:
+  plot_interval: 1
+  plot_vector_count: 1
+  plots_dir: "datasets/dataset_NS_old/plots"
+
+data_settings:
+  num_samples: 1
+  num_workers: 1
+  data_dir: "datasets/dataset_NS_old/samples"
+
+simulator_settings:
+  N: 128 # Grid size
+  L: 1.0 # Domain length
+  dt: 0.001 # Time step
+  nu: 0.001 # Viscosity
+  nburn: 200
+  nsteps: 500 # Number of time steps to forward solve
+
+reduced_model_settings:
+  eigen_value_fraction: 0.01
+  eigen_vector_count: 1 # Overrides eigen_value_fraction if set
