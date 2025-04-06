@@ -8,6 +8,7 @@ This directory contains the training framework for the DeFINO (Derivative-based 
 # Install Miniconda (if not already installed)
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
+source ~/miniconda3/bin/activate
 
 # Create and activate conda environment
 conda env create -f environment.yml

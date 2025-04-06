@@ -3,8 +3,6 @@ import argparse
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
-
-from callbacks import SaturationVisualizationCallback, JacobianVisualizationCallback
 from utils import (
     load_config, save_config, setup_logging, setup_neptune_logging,
     create_directories, log_config_to_file, set_seed, get_dataset, get_model
@@ -51,7 +49,7 @@ def main():
     model = get_model(config.experiment.model_type, config.model_settings)
     
     train_loader = data_loader.get_dataloader(offset=0, limit=config.training_settings.num_train, shuffle=False) # TODO: figure out how to set to true & have same plotting in callback
-    test_loader = data_loader.get_dataloader(offset=config.training_settings.num_train, limit=config.training_settings.num_test, shuffle=False)
+    test_loader = data_loader.get_dataloader(offset=config.training_settings.num_train, limit=config.training_settings.num_train + config.training_settings.num_test, shuffle=False)
 
     # Set up loggers
     loggers = []
@@ -102,6 +100,28 @@ def main():
     callbacks.append(lr_monitor)
     
     # TODO: Make callbacks dynamic based on config / dataset type
+    from callbacks import NSVisualizationCallback
+    callbacks.append(NSVisualizationCallback(
+        output_dir=os.path.join(directories['plot_dir'], 'forward'),
+        save_to_disk=config.visualization_settings.save_to_disk,
+        log_to_neptune=config.visualization_settings.log_to_neptune,
+        num_plots=config.visualization_settings.num_plots
+    ))
+    
+    from callbacks import NS_JVP_VisualizationCallback
+    callbacks.append(NS_JVP_VisualizationCallback(
+        output_dir=os.path.join(directories['plot_dir'], 'jvp'),
+        save_to_disk=config.visualization_settings.save_to_disk,
+        log_to_neptune=config.visualization_settings.log_to_neptune,
+        num_plots=config.visualization_settings.num_plots
+    ))
+    
+    from callbacks import NS_Inversion_VisualizationCallback
+    callbacks.append(NS_Inversion_VisualizationCallback(
+        output_dir=os.path.join(directories['plot_dir'], 'ns_inversion'),
+        save_to_disk=config.visualization_settings.save_to_disk,
+        log_to_neptune=config.visualization_settings.log_to_neptune,
+    ))
 
     # Create trainer and set checkpointing to false
     trainer = pl.Trainer(
@@ -117,7 +137,7 @@ def main():
     
     # Start training
     logger.info(f"Starting training...")
-    # trainer.fit(model, train_loader, test_loader)
+    trainer.fit(model, train_loader, test_loader)
     
     # Save best model path
     best_model_path = checkpoint_callback.best_model_path

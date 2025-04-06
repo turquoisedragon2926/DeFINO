@@ -19,15 +19,15 @@ class NSModel(pl.LightningModule):
         padding: int = 3,
         dimension: int = 3,
         latent_channels: int = 64,
-        loss_type: str = "MSE",
+        loss_type: str = "L2",
         reg_param: float = 0.01,
-        scale_factor: float = 5500.0,
+        scale_factor: float = 5500.0, # TODO: Figure out why JJ scaled vJp by 5500.0
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         **kwargs
     ):
         """
-        Initialize the GCS model.
+        Initialize the NS model.
         
         Args:
             in_channels: Number of input channels
@@ -38,7 +38,7 @@ class NSModel(pl.LightningModule):
             padding: Padding size
             dimension: Input dimension (3 for spacetime)
             latent_channels: Number of latent channels
-            loss_type: Loss type to use (MSE, JAC)
+            loss_type: Loss type to use (L2, JAC)
             reg_param: Regularization parameter for Jacobian loss
             scale_factor: Scale factor for Jacobian loss
             learning_rate: Learning rate for optimizer
@@ -66,9 +66,7 @@ class NSModel(pl.LightningModule):
         
         # For tracking loss metrics
         self.train_rel_l2_loss = 0.0
-        self.train_mse_loss = 0.0
         self.val_rel_l2_loss = 0.0
-        self.jac_loss = 0.0
     
     def forward(self, x):
         """Forward pass through the model."""
@@ -77,7 +75,15 @@ class NSModel(pl.LightningModule):
     def relative_l2_loss(self, true, pred):
         """Relative L2 loss."""
         return torch.norm(true - pred) / torch.norm(true)
-    
+
+    def compute_Jvp(self, x, v):
+        Jvp = torch.zeros_like(v)
+        for eig_idx in range(v.shape[-1]):
+            jvp_value, _ = torch.autograd.functional.jvp(self.forward, x, v[:, :, :, eig_idx].unsqueeze(0), create_graph=True)
+            Jvp[:, :, :, eig_idx] = jvp_value.squeeze()
+        x.requires_grad_(False)
+        return Jvp
+
     def training_step(self, batch, batch_idx):
         """Training step."""
         x = batch['x']
@@ -88,19 +94,23 @@ class NSModel(pl.LightningModule):
         rel_l2_loss = self.relative_l2_loss(y.squeeze(), output.squeeze())
         self.train_rel_l2_loss = rel_l2_loss.detach()
         
-        # MSE loss
-        mse_loss = torch.mean((y.squeeze() - output.squeeze()) ** 2)
-        self.train_mse_loss = mse_loss.detach()
-        
         # Total loss (default to REL L2)
         loss = rel_l2_loss
         
         # Log loss
         self.log('train_rel_l2_loss', rel_l2_loss, prog_bar=True, on_step=True, on_epoch=True)
-        self.log('train_mse_loss', mse_loss, prog_bar=True, on_step=True, on_epoch=True)
 
-        # TODO: Add Jacobian loss
+        if self.loss_type == "JAC":
+            v = batch['v']
+            Jvp = batch['Jvp']
             
+            Jvp_pred = self.compute_Jvp(x, v)
+            jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
+            loss = rel_l2_loss + self.reg_param * jac_loss
+            
+            self.train_jac_loss = jac_loss.detach()
+            self.log('train_jac_loss', jac_loss, prog_bar=True, on_step=True, on_epoch=True)
+
         # Log total loss
         self.log('train_loss', loss, prog_bar=True, on_step=True, on_epoch=True)
         return loss
@@ -119,9 +129,24 @@ class NSModel(pl.LightningModule):
         
         # Log validation loss
         self.log('val_rel_l2_loss', val_rel_l2_loss, prog_bar=True, on_epoch=True)
+
+        # JAC loss
+        # v = batch['v']
+        # Jvp = batch['Jvp']
         
-        return {'val_loss': val_rel_l2_loss}
+        # Jvp_pred = self.compute_Jvp(x, v)
+        # jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)
+        # self.log('val_jac_loss', jac_loss, prog_bar=True, on_step=False, on_epoch=True, sync_dist=True)
         
+        # # Calculate combined loss
+        # combined_loss = val_rel_l2_loss + self.reg_param * jac_loss
+        
+        # # Explicitly log the combined validation loss as well
+        # self.log('val_loss', combined_loss, prog_bar=True, on_step=False, on_epoch=True, sync_dist=True)
+        
+        return {"val_loss": val_rel_l2_loss}
+
+    
     def _clear_memory(self):
         """Clear CUDA memory and run garbage collection."""
         if torch.cuda.is_available():

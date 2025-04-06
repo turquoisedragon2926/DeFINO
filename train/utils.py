@@ -170,8 +170,6 @@ def create_directories(config: DictConfig) -> Dict[str, str]:
         "output_dir": os.path.join(config.experiment.output_dir, experiment_name),
         "checkpoint_dir": os.path.join(config.experiment.checkpoint_dir, experiment_name),
         "plot_dir": os.path.join(config.experiment.output_dir, experiment_name, "plots"),
-        "plot_sat_dir": os.path.join(config.experiment.output_dir, experiment_name, "plots", "saturation"),
-        "plot_jac_dir": os.path.join(config.experiment.output_dir, experiment_name, "plots", "jacobian"),
     }
     
     # Create directories

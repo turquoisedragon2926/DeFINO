@@ -23,17 +23,25 @@ class CustomDataset(torch.utils.data.Dataset):
     
     def __getitem__(self, idx):
         with h5py.File(self.sample_paths[idx], 'r') as f:
-            x = f['x'][:]
-            y = f['y'][:]
-            v = f['v'][:]
-            Jvp = f['Jvp'][:]
+            x = f['x'][:].astype(np.float32)
+            y = f['y'][:].astype(np.float32)
+            v = f['v'][:].astype(np.float32)
+            Jvp = f['Jvp'][:].astype(np.float32)
+            
+        # extract the batch and sample number from the path
+        # ex path: /home/ubuntu/DeFINO/datasets/dataset_NS_batch2/samples/sample_6.h5
+        path_parts = self.sample_paths[idx].split('/')
+        batch_num = path_parts[-3]
+        sample_num = path_parts[-1].split('.')[0]
+        id_str = f"b={batch_num}_s={sample_num}"
             
         item = {
-            'x': x,
-            'y': y,
-            'Jvp': Jvp,
-            'v': v,
-            'sample_path': self.sample_paths[idx]
+            'x': x.reshape(1, self.nx, self.ny),
+            'y': y.reshape(1, self.nx, self.ny),
+            'Jvp': Jvp.reshape(self.nx, self.ny, self.eigen_count),
+            'v': v.reshape(self.nx, self.ny, self.eigen_count),
+            'sample_path': self.sample_paths[idx],
+            'idx': id_str
         }
         return item
 
