@@ -13,7 +13,7 @@ class FIMReducedModel(ReducedModel):
         with self.thread_lock:
             eigen_count = self.eigen_count(simulator)
 
-            y, jvp_func = torch.func.jvp(simulator, x)
+            y, vjp_func = torch.func.vjp(simulator, x)
             eigenvectors = torch.randn((simulator.domain, eigen_count))
             
             Z = torch.randn((simulator.range, eigen_count)).to(x.device)
@@ -24,7 +24,7 @@ class FIMReducedModel(ReducedModel):
                 print(f"Computing FIM Eigenvector {j + 1} of {eigen_count}")
 
                 probe_vector = B[:, j].reshape(y.shape)
-                Q[:, j] = jvp_func(probe_vector)[0].reshape((simulator.domain,))
+                Q[:, j] = vjp_func(probe_vector)[0].reshape((simulator.domain,))
 
             U, S, V = torch.linalg.svd(Q)
             eigenvectors = U[:, :eigen_count]
