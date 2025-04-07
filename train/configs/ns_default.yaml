@@ -17,8 +17,8 @@ data_settings:
   batch_size: 1
   eigen_count: 8
   sample_directories:
-    - "/home/ubuntu/DeFINO/datasets/dataset_NS_batch1"
-    - "/home/ubuntu/DeFINO/datasets/dataset_NS_batch2"
+    - "../datasets/dataset_NS_batch1" # when we are currently at train folder
+    - "../datasets/dataset_NS_batch2"
 
 model_settings:
   in_channels: 1
@@ -29,7 +29,7 @@ model_settings:
   padding: 0
   dimension: 2
   latent_channels: 64
-  loss_type: "JAC"  # "L2" / "JAC"
+  loss_type: "L2"  # "L2" / "JAC"
   train_eigen_count: 8
   reg_param: 0.5 # not used for L2
   scale_factor: 5500.0 # not used for L2
@@ -57,4 +57,4 @@ visualization_settings:
 
 neptune:
   enabled: true
-  project: "slim-gatech/DeFINO"
+  project: "slim-gatech/Jayjay"
