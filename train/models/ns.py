@@ -130,7 +130,7 @@ class NSModel(pl.LightningModule):
         # Log loss
         self.log('train_rel_l2_loss', rel_l2_loss, prog_bar=True, on_step=True, on_epoch=True)
 
-        v = batch['v']
+        v = batch['v'] * self.scale_factor
         Jvp = batch['Jvp']
 
         # print("v and Jvp size", v.shape, Jvp.shape) # v and Jvp size torch.Size([1, 128, 128, 8]) torch.Size([1, 128, 128, 8]
