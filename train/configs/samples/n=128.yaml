@@ -1,22 +1,22 @@
 base_config: ../ns_default.yaml
 
 experiment:
-  name: "n=64_e=1_m=FNO_s=RFS_l=JAC_lamba=0.5"
+  name: "n=128_e=4_m=FNO_s=RFS_l=JAC_lamba=0.5"
   tags:
-    - "1 Eigenvector"
-    - "64 samples"
+    - "4 Eigenvectors"
+    - "128 samples"
     - "FNO"
     - "RFS"
     - "JAC"
 
 model_settings:
-  train_eigen_count: 1
+  train_eigen_count: 4
   loss_type: "JAC"
   reg_param: 0.5 # not used for L2
   scale_factor: 1.0 # not used for L2
   learning_rate: 8e-4
 
 training_settings:
-  num_train: 64
-  num_test: 8
+  num_train: 128
+  num_test: 10
   num_epoch: 100
