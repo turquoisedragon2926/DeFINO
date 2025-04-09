@@ -23,4 +23,4 @@ model_settings:
 training_settings:
   num_train: 64
   num_test: 8
-  num_epoch: 100
+  num_epoch: 150

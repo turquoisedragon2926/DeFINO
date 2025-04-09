@@ -1,7 +1,7 @@
 base_config: ../ns_default.yaml
 
 experiment:
-  name: "n=128_e=4_m=FNO_s=RFS_l=JAC_lamba=0.5_train=64"
+  name: "n=64_e=4_m=FNO_s=RFS_l=JAC_lamba=0.5"
   tags:
     - "4 Eigenvectors"
     - "64 samples"
@@ -19,4 +19,4 @@ model_settings:
 training_settings:
   num_train: 64
   num_test: 8
-  num_epoch: 100
+  num_epoch: 150
