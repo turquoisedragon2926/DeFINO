@@ -81,7 +81,7 @@ class NSModel(pl.LightningModule):
     def compute_Jvp(self, x, v):
         Jvp = torch.zeros_like(v)
         for eig_idx in range(v.shape[-1]):
-            jvp_value, _ = torch.autograd.functional.jvp(self.forward, x, v[:, :, :, eig_idx].unsqueeze(0), create_graph=True)
+            _, jvp_value = torch.autograd.functional.jvp(self.forward, x, v[:, :, :, eig_idx].unsqueeze(0), create_graph=True)
             Jvp[:, :, :, eig_idx] = jvp_value.squeeze()
         x.requires_grad_(False)
         return Jvp
