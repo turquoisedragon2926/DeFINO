@@ -482,7 +482,8 @@ class NS_JVP_VisualizationCallback(BaseVisualizationCallback):
             fig.colorbar(im1, ax=axes[1, eig_idx], fraction=0.046, pad=0.04)
             
             # Prediction
-            im2 = axes[2, eig_idx].imshow(pred_np, cmap='jet', vmin=vmin, vmax=vmax)
+            # im2 = axes[2, eig_idx].imshow(pred_np, cmap='jet', vmin=vmin, vmax=vmax)
+            im2 = axes[2, eig_idx].imshow(pred_np, cmap='jet')
             axes[2, eig_idx].set_title(f'Pred Jvp')
             fig.colorbar(im2, ax=axes[2, eig_idx], fraction=0.046, pad=0.04)
             
@@ -558,7 +559,8 @@ class NS_Inversion_VisualizationCallback(BaseVisualizationCallback):
         fig.colorbar(im1, ax=axes[2], fraction=0.046, pad=0.04)
         
         # Row 4
-        im2 = axes[3].imshow(x_pred, cmap='jet', vmin=vmin, vmax=vmax)
+        # im2 = axes[3].imshow(x_pred, cmap='jet', vmin=vmin, vmax=vmax)
+        im2 = axes[3].imshow(x_pred, cmap='jet')
         axes[3].set_title('Surrogate Inverted V0')
         fig.colorbar(im2, ax=axes[3], fraction=0.046, pad=0.04)
         
