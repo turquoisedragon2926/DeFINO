@@ -3,7 +3,6 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import Callback
 from matplotlib.colors import SymLogNorm, LinearSegmentedColormap
 import matplotlib.colors as colors
@@ -198,10 +197,7 @@ class JacobianVisualizationCallback(BaseVisualizationCallback):
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
         if (trainer.current_epoch - 1) % self.plot_interval == 0:
-            original_shuffle = trainer.train_dataloader.dataset.shuffle
-            trainer.train_dataloader.dataset.shuffle = False
             self.plot_jacobian_results(trainer, pl_module, trainer.train_dataloader, "train")
-            trainer.train_dataloader.dataset.shuffle = original_shuffle
     
     def on_validation_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each validation epoch."""
@@ -376,21 +372,8 @@ class NSVisualizationCallback(BaseVisualizationCallback):
     def on_train_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each training epoch."""
         if (trainer.current_epoch - 1) % self.plot_interval == 0:
-            train_loader = trainer.train_dataloader
-
-            # Re-create the dataloader with shuffle=False for plotting same samples
-            new_train_loader = DataLoader(
-                dataset=train_loader.dataset,
-                batch_size=train_loader.batch_size,
-                num_workers=train_loader.num_workers,
-                pin_memory=train_loader.pin_memory,
-                collate_fn=train_loader.collate_fn,
-                drop_last=train_loader.drop_last,
-                shuffle=False,
-            )
-
-            self.plot_ns_results(trainer, pl_module, new_train_loader, "train")
-
+            self.plot_ns_results(trainer, pl_module, trainer.train_dataloader, "train")
+        
     def on_validation_epoch_end(self, trainer, pl_module):
         """Create visualization at the end of each validation epoch."""
         with torch.no_grad():
