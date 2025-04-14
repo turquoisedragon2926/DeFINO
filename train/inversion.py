@@ -157,9 +157,9 @@ if __name__ == "__main__":
     num_vec = 10
     num_epoch = 601
     discretization = 128
-    kernel_size = 27
+    kernel_size = 25
     sigma = 5.0
-    learning_rate = 0.002  # Inversion learning rate.
+    learning_rate = 0.001  # Inversion learning rate.
     
     # Load configuration and dataset.
     config = load_config("output/n=64_e=1_m=FNO_s=RFS_l=JAC_lamba=0.5_20250409_124642/config.yaml")
