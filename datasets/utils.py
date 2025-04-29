@@ -82,11 +82,37 @@ def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
         v, s = reduced_model.get_direction(simulator, x)
         Jvp = torch.zeros((simulator.range, eigen_count)).to(x.device)
 
+        print(f"Sample {i+1}: Running initial forward simulation...")
+        with torch.no_grad(): # Can use context manager or the flag
+            # y = simulator(x.clone(), enable_grad=False) # Pass flag explicitly
+            y = simulator(x.clone()) # Or rely on default enable_grad=False if set in signature
+
+        # --- Get reduced directions (THIS calls FIM which enables grad internally) ---
+        print(f"Sample {i+1}: Getting reduced directions (FIM)...")
+        # FIMReducedModel.get_direction will call simulator(..., enable_grad=True) internally
+        v, s = reduced_model.get_direction(simulator, x)
+        v = v.to(x.device) # Ensure directions are on the correct device
+
+        # --- Compute Custom JVP (using finite differences) ---
+        Jvp = torch.zeros((simulator.range, eigen_count), dtype=x.dtype, device=x.device)
+
+        print(f"Sample {i+1}: Computing {eigen_count} custom JVPs...")
         for e in range(eigen_count):
-            print(f"Eigenvector {e + 1} of {eigen_count}")
+            # print(f"Sample {i + 1}: Computing JVP for Eigenvector {e + 1}/{eigen_count}") # Verbose
             vector = v[:, e].reshape(x.shape).to(x.device)
-            y, jvp_vector = torch.func.jvp(simulator, (x,), (vector,))
-            Jvp[:, e] = jvp_vector.reshape(simulator.range)
+
+            # Call the simulator's custom JVP method (uses forward with enable_grad=False internally)
+            jvp_vector = simulator.jvp(x.clone(), vector.clone())
+
+            if jvp_vector.numel() != simulator.range:
+                print(f"Warning: JVP vector size mismatch. Expected {simulator.range}, Got {jvp_vector.numel()}. Reshaping.")
+                jvp_vector = jvp_vector.reshape(simulator.range) # Reshape if necessary (e.g., if output is multi-dim)
+            else:
+                # Ensure it has the correct 1D shape for assignment
+                jvp_vector = jvp_vector.view(simulator.range)
+
+
+            Jvp[:, e] = jvp_vector
 
         if i % plot_interval == 0:
             sample_dir = os.path.join(plots_dir, f"sample_{i}")
