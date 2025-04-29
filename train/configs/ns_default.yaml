@@ -45,8 +45,8 @@ training_settings:
   shuffle_test: false
   enable_checkpointing: true
   log_checkpoint: false # log to neptune (cloud)
-  checkpoint_interval: 1
-  save_top_k: 1
+  checkpoint_interval: 20
+  save_top_k: -1
 
 visualization_settings:
   save_to_disk: false

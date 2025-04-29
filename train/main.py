@@ -76,10 +76,10 @@ def main():
     checkpoint_callback = ModelCheckpoint(
         dirpath=directories['checkpoint_dir'],
         filename=f"{config.experiment.name}_{{epoch:03d}}_{{val_rel_l2_loss:.4f}}",
-        monitor="val_rel_l2_loss",
+        # monitor="val_rel_l2_loss",
         save_top_k=config.training_settings.save_top_k,
-        mode="min",
-        save_last=False,
+        # mode="min",
+        save_last=True,
         every_n_epochs=config.training_settings.checkpoint_interval
     )
     if config.training_settings.enable_checkpointing:

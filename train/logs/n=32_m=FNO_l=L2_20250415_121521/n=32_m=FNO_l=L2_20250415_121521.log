@@ -1,0 +1,53 @@
+2025-04-15 12:15:21,585 - INFO - Configuration:
+2025-04-15 12:15:21,587 - INFO - [experiment]
+2025-04-15 12:15:21,587 - INFO -   name: n=32_m=FNO_l=L2
+2025-04-15 12:15:21,588 - INFO -   log_dir: logs
+2025-04-15 12:15:21,589 - INFO -   output_dir: output
+2025-04-15 12:15:21,589 - INFO -   checkpoint_dir: checkpoints
+2025-04-15 12:15:21,590 - INFO -   model_type: NS
+2025-04-15 12:15:21,590 - INFO -   dataset_type: NS
+2025-04-15 12:15:21,591 - INFO -   seed: 42
+2025-04-15 12:15:21,591 - INFO -   debug: False
+2025-04-15 12:15:21,592 - INFO -   tags: ['32 samples', 'FNO']
+2025-04-15 12:15:21,592 - INFO - [data_settings]
+2025-04-15 12:15:21,593 - INFO -   nx: 128
+2025-04-15 12:15:21,593 - INFO -   ny: 128
+2025-04-15 12:15:21,594 - INFO -   batch_size: 1
+2025-04-15 12:15:21,595 - INFO -   eigen_count: 8
+2025-04-15 12:15:21,595 - INFO -   sample_directories: ['../datasets/dataset_NS_batch1', '../datasets/dataset_NS_batch2']
+2025-04-15 12:15:21,596 - INFO - [model_settings]
+2025-04-15 12:15:21,597 - INFO -   in_channels: 1
+2025-04-15 12:15:21,597 - INFO -   out_channels: 1
+2025-04-15 12:15:21,598 - INFO -   decoder_layer_size: 256
+2025-04-15 12:15:21,599 - INFO -   num_fno_layers: 6
+2025-04-15 12:15:21,599 - INFO -   num_fno_modes: [32, 32]
+2025-04-15 12:15:21,600 - INFO -   padding: 0
+2025-04-15 12:15:21,600 - INFO -   dimension: 2
+2025-04-15 12:15:21,601 - INFO -   latent_channels: 64
+2025-04-15 12:15:21,601 - INFO -   loss_type: L2
+2025-04-15 12:15:21,602 - INFO -   train_eigen_count: 8
+2025-04-15 12:15:21,602 - INFO -   reg_param: 0.5
+2025-04-15 12:15:21,603 - INFO -   scale_factor: 10.0
+2025-04-15 12:15:21,603 - INFO -   learning_rate: 0.0008
+2025-04-15 12:15:21,604 - INFO -   weight_decay: 1e-05
+2025-04-15 12:15:21,604 - INFO - [training_settings]
+2025-04-15 12:15:21,605 - INFO -   accum_steps: 1
+2025-04-15 12:15:21,606 - INFO -   num_epoch: 60
+2025-04-15 12:15:21,606 - INFO -   num_train: 32
+2025-04-15 12:15:21,607 - INFO -   num_test: 4
+2025-04-15 12:15:21,607 - INFO -   shuffle_train: True
+2025-04-15 12:15:21,608 - INFO -   shuffle_test: False
+2025-04-15 12:15:21,608 - INFO -   enable_checkpointing: True
+2025-04-15 12:15:21,609 - INFO -   log_checkpoint: False
+2025-04-15 12:15:21,609 - INFO -   checkpoint_interval: 20
+2025-04-15 12:15:21,610 - INFO -   save_top_k: -1
+2025-04-15 12:15:21,611 - INFO - [visualization_settings]
+2025-04-15 12:15:21,611 - INFO -   save_to_disk: False
+2025-04-15 12:15:21,612 - INFO -   log_to_neptune: True
+2025-04-15 12:15:21,613 - INFO -   num_plots: 2
+2025-04-15 12:15:21,613 - INFO -   check_val_every_n_epoch: 1
+2025-04-15 12:15:21,614 - INFO -   plot_interval: 1
+2025-04-15 12:15:21,614 - INFO - [neptune]
+2025-04-15 12:15:21,615 - INFO -   enabled: True
+2025-04-15 12:15:21,615 - INFO -   project: slim-gatech/Jayjay
+2025-04-15 12:15:31,330 - INFO - Starting training...

@@ -87,22 +87,6 @@ class NSModel(pl.LightningModule):
         Jvp = torch.zeros_like(v)
         for eig_idx in range(v.shape[-1]):
             jvp_output, jvp_value = torch.autograd.functional.jvp(self.forward, x, v[:, :, :, eig_idx].unsqueeze(0), create_graph=True)
-            
-            # Plot the v matrix
-            plt.figure()
-            im1 = plt.imshow(jvp_output.squeeze().detach().cpu())
-            plt.title('v Matrix (Eigenvector 1)')
-            plt.colorbar(im1)
-            plt.savefig(f'jvp_output_nn_{eig_idx}.png')
-            plt.close()
-            # Plot the Jvp matrix
-            plt.figure()
-            im2 = plt.imshow(jvp_value.squeeze().detach().cpu())
-            plt.title('Jvp Matrix (Eigenvector 1)')
-            plt.colorbar(im2)
-            plt.savefig(f'jvp_value_nn_{eig_idx}.png')
-            plt.close()
-            
             Jvp[:, :, :, eig_idx] = jvp_value.squeeze()
         # x.requires_grad_(False)
         return Jvp
@@ -112,13 +96,6 @@ class NSModel(pl.LightningModule):
         x = batch['x']
         y = batch['y']
         output = self.forward(x)
-        
-        plt.figure()
-        im2 = plt.imshow(output.squeeze().detach().cpu())
-        plt.title('output')
-        plt.colorbar(im2)
-        plt.savefig(f'output_nn.png')
-        plt.close()
         
         # REL L2 loss
         rel_l2_loss = self.relative_l2_loss(y.squeeze(), output.squeeze())
@@ -138,21 +115,6 @@ class NSModel(pl.LightningModule):
         # Get the train eigencount eigenvectors
         v = v[:, :, :, :self.train_eigen_count]
         Jvp = Jvp[:, :, :, :self.train_eigen_count]
-
-        # Plot the v matrix
-        plt.figure()
-        im1 = plt.imshow(v[0, :, :, 0].squeeze().detach().cpu())
-        plt.title('v Matrix (Eigenvector 1)')
-        plt.colorbar(im1)
-        plt.savefig('v_matrix_plot.png')
-        plt.close()
-        # Plot the Jvp matrix
-        plt.figure()
-        im2 = plt.imshow(Jvp[0, :, :, 0].squeeze().detach().cpu())
-        plt.title('Jvp Matrix (Eigenvector 1)')
-        plt.colorbar(im2)
-        plt.savefig('Jvp_matrix_plot.png')
-        plt.close()
         
         Jvp_pred = self.compute_Jvp(x, v)
         jac_loss = self.relative_l2_loss(Jvp, Jvp_pred)

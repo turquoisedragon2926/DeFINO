@@ -1,0 +1,52 @@
+2025-04-21 12:17:22,588 - INFO - Configuration:
+2025-04-21 12:17:22,589 - INFO - [experiment]
+2025-04-21 12:17:22,590 - INFO -   name: n=128_e=8_m=FNO_s=RAND_l=JAC
+2025-04-21 12:17:22,591 - INFO -   log_dir: logs
+2025-04-21 12:17:22,591 - INFO -   output_dir: output
+2025-04-21 12:17:22,592 - INFO -   checkpoint_dir: checkpoints
+2025-04-21 12:17:22,593 - INFO -   model_type: NS
+2025-04-21 12:17:22,593 - INFO -   dataset_type: NS
+2025-04-21 12:17:22,594 - INFO -   seed: 42
+2025-04-21 12:17:22,595 - INFO -   debug: False
+2025-04-21 12:17:22,595 - INFO -   tags: ['4 Eigenvectors', '64 samples', 'FNO', 'RAND', 'JAC']
+2025-04-21 12:17:22,596 - INFO - [data_settings]
+2025-04-21 12:17:22,597 - INFO -   nx: 128
+2025-04-21 12:17:22,598 - INFO -   ny: 128
+2025-04-21 12:17:22,598 - INFO -   batch_size: 1
+2025-04-21 12:17:22,599 - INFO -   eigen_count: 8
+2025-04-21 12:17:22,599 - INFO -   sample_directories: ['/home/ubuntu/DeFINO/datasets/dataset_NS_rand_batch1', '/home/ubuntu/DeFINO/datasets/dataset_NS_rand_batch2', '/home/ubuntu/DeFINO/datasets/dataset_NS_rand_batch3', '/home/ubuntu/DeFINO/datasets/dataset_NS_rand_batch4']
+2025-04-21 12:17:22,600 - INFO - [model_settings]
+2025-04-21 12:17:22,601 - INFO -   in_channels: 1
+2025-04-21 12:17:22,601 - INFO -   out_channels: 1
+2025-04-21 12:17:22,602 - INFO -   decoder_layer_size: 256
+2025-04-21 12:17:22,602 - INFO -   num_fno_layers: 6
+2025-04-21 12:17:22,603 - INFO -   num_fno_modes: [32, 32]
+2025-04-21 12:17:22,604 - INFO -   padding: 0
+2025-04-21 12:17:22,604 - INFO -   dimension: 2
+2025-04-21 12:17:22,605 - INFO -   latent_channels: 64
+2025-04-21 12:17:22,606 - INFO -   loss_type: JAC
+2025-04-21 12:17:22,606 - INFO -   train_eigen_count: 8
+2025-04-21 12:17:22,607 - INFO -   reg_param: 0.5
+2025-04-21 12:17:22,607 - INFO -   scale_factor: 10.0
+2025-04-21 12:17:22,608 - INFO -   learning_rate: 0.0008
+2025-04-21 12:17:22,609 - INFO -   weight_decay: 1e-05
+2025-04-21 12:17:22,609 - INFO - [training_settings]
+2025-04-21 12:17:22,610 - INFO -   accum_steps: 1
+2025-04-21 12:17:22,611 - INFO -   num_epoch: 150
+2025-04-21 12:17:22,611 - INFO -   num_train: 128
+2025-04-21 12:17:22,612 - INFO -   num_test: 8
+2025-04-21 12:17:22,612 - INFO -   shuffle_train: True
+2025-04-21 12:17:22,613 - INFO -   shuffle_test: False
+2025-04-21 12:17:22,614 - INFO -   enable_checkpointing: True
+2025-04-21 12:17:22,614 - INFO -   log_checkpoint: False
+2025-04-21 12:17:22,615 - INFO -   checkpoint_interval: 20
+2025-04-21 12:17:22,616 - INFO -   save_top_k: -1
+2025-04-21 12:17:22,616 - INFO - [visualization_settings]
+2025-04-21 12:17:22,617 - INFO -   save_to_disk: False
+2025-04-21 12:17:22,617 - INFO -   log_to_neptune: True
+2025-04-21 12:17:22,618 - INFO -   num_plots: 2
+2025-04-21 12:17:22,618 - INFO -   check_val_every_n_epoch: 1
+2025-04-21 12:17:22,619 - INFO -   plot_interval: 1
+2025-04-21 12:17:22,619 - INFO - [neptune]
+2025-04-21 12:17:22,620 - INFO -   enabled: True
+2025-04-21 12:17:22,620 - INFO -   project: slim-gatech/Jayjay

@@ -1,0 +1,55 @@
+2025-04-14 02:53:19,445 - INFO - Configuration:
+2025-04-14 02:53:19,447 - INFO - [experiment]
+2025-04-14 02:53:19,447 - INFO -   name: n=64_e=40_m=FNO_s=RFS_l=JAC_lamba=0.5
+2025-04-14 02:53:19,448 - INFO -   log_dir: logs
+2025-04-14 02:53:19,448 - INFO -   output_dir: output
+2025-04-14 02:53:19,449 - INFO -   checkpoint_dir: checkpoints
+2025-04-14 02:53:19,449 - INFO -   model_type: NS
+2025-04-14 02:53:19,450 - INFO -   dataset_type: NS
+2025-04-14 02:53:19,450 - INFO -   seed: 42
+2025-04-14 02:53:19,451 - INFO -   debug: False
+2025-04-14 02:53:19,452 - INFO -   tags: ['40 Eigenvectors', '64 samples', 'FNO', 'RFS', 'JAC']
+2025-04-14 02:53:19,452 - INFO - [data_settings]
+2025-04-14 02:53:19,453 - INFO -   nx: 128
+2025-04-14 02:53:19,453 - INFO -   ny: 128
+2025-04-14 02:53:19,454 - INFO -   batch_size: 1
+2025-04-14 02:53:19,455 - INFO -   eigen_count: 8
+2025-04-14 02:53:19,455 - INFO -   sample_directories: ['../datasets/dataset_NS_batch1', '../datasets/dataset_NS_batch2']
+2025-04-14 02:53:19,456 - INFO - [model_settings]
+2025-04-14 02:53:19,456 - INFO -   in_channels: 1
+2025-04-14 02:53:19,457 - INFO -   out_channels: 1
+2025-04-14 02:53:19,458 - INFO -   decoder_layer_size: 256
+2025-04-14 02:53:19,458 - INFO -   num_fno_layers: 6
+2025-04-14 02:53:19,459 - INFO -   num_fno_modes: [32, 32]
+2025-04-14 02:53:19,460 - INFO -   padding: 0
+2025-04-14 02:53:19,460 - INFO -   dimension: 2
+2025-04-14 02:53:19,461 - INFO -   latent_channels: 64
+2025-04-14 02:53:19,461 - INFO -   loss_type: JAC
+2025-04-14 02:53:19,462 - INFO -   train_eigen_count: 40
+2025-04-14 02:53:19,462 - INFO -   reg_param: 0.5
+2025-04-14 02:53:19,463 - INFO -   scale_factor: 1.0
+2025-04-14 02:53:19,464 - INFO -   learning_rate: 0.0008
+2025-04-14 02:53:19,465 - INFO -   weight_decay: 1e-05
+2025-04-14 02:53:19,465 - INFO - [training_settings]
+2025-04-14 02:53:19,466 - INFO -   accum_steps: 1
+2025-04-14 02:53:19,466 - INFO -   num_epoch: 150
+2025-04-14 02:53:19,467 - INFO -   num_train: 64
+2025-04-14 02:53:19,468 - INFO -   num_test: 8
+2025-04-14 02:53:19,468 - INFO -   shuffle_train: True
+2025-04-14 02:53:19,469 - INFO -   shuffle_test: False
+2025-04-14 02:53:19,469 - INFO -   enable_checkpointing: True
+2025-04-14 02:53:19,470 - INFO -   log_checkpoint: False
+2025-04-14 02:53:19,470 - INFO -   checkpoint_interval: 1
+2025-04-14 02:53:19,471 - INFO -   save_top_k: 1
+2025-04-14 02:53:19,471 - INFO - [visualization_settings]
+2025-04-14 02:53:19,472 - INFO -   save_to_disk: False
+2025-04-14 02:53:19,472 - INFO -   log_to_neptune: True
+2025-04-14 02:53:19,472 - INFO -   num_plots: 2
+2025-04-14 02:53:19,473 - INFO -   check_val_every_n_epoch: 1
+2025-04-14 02:53:19,473 - INFO -   plot_interval: 1
+2025-04-14 02:53:19,474 - INFO - [neptune]
+2025-04-14 02:53:19,474 - INFO -   enabled: True
+2025-04-14 02:53:19,475 - INFO -   project: slim-gatech/Jayjay
+2025-04-14 02:53:29,443 - INFO - Starting training...
+2025-04-14 19:37:02,983 - INFO - Best model saved at: /mnt/c/Users/D2A2/Documents/DeFINO_Richard/train/checkpoints/n=64_e=40_m=FNO_s=RFS_l=JAC_lamba=0.5_20250414_025319/n=64_e=40_m=FNO_s=RFS_l=JAC_lamba=0.5_epoch=027_val_rel_l2_loss=0.4108.ckpt
+2025-04-14 19:37:03,294 - INFO - Training completed

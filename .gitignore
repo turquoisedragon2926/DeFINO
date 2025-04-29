@@ -25,6 +25,12 @@
 /test/
 /plot/
 /test_result/
+/train/checkpoints/
+/train/inversion_result_*
+/train/output/
+/train/loss_statistics_multiple_samples_*
+/data_generation/.CondaPkg/
+/data_generation/img_40/
 
 # metadata
 /output/
@@ -34,3 +40,6 @@
 __pycache__/
 .env
 /datasets/dataset_*
+/datasets/datasets/dataset_*
+/train/.neptune/
+/JutulDarcyRules_alt.jl/.github/

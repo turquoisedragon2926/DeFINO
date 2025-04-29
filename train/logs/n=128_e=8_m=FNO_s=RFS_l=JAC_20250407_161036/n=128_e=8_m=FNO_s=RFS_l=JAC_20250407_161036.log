@@ -1,0 +1,455 @@
+2025-04-07 16:10:36,323 - INFO - Configuration:
+2025-04-07 16:10:36,324 - INFO - [experiment]
+2025-04-07 16:10:36,325 - INFO -   name: n=128_e=8_m=FNO_s=RFS_l=JAC
+2025-04-07 16:10:36,325 - INFO -   log_dir: logs
+2025-04-07 16:10:36,326 - INFO -   output_dir: output
+2025-04-07 16:10:36,326 - INFO -   checkpoint_dir: checkpoints
+2025-04-07 16:10:36,327 - INFO -   model_type: NS
+2025-04-07 16:10:36,327 - INFO -   dataset_type: NS
+2025-04-07 16:10:36,328 - INFO -   seed: 42
+2025-04-07 16:10:36,329 - INFO -   debug: False
+2025-04-07 16:10:36,329 - INFO -   tags: ['4 Eigenvectors', '2 samples', 'FNO', 'RFS', 'JAC']
+2025-04-07 16:10:36,330 - INFO - [data_settings]
+2025-04-07 16:10:36,331 - INFO -   nx: 128
+2025-04-07 16:10:36,331 - INFO -   ny: 128
+2025-04-07 16:10:36,332 - INFO -   batch_size: 1
+2025-04-07 16:10:36,332 - INFO -   eigen_count: 8
+2025-04-07 16:10:36,333 - INFO -   sample_directories: ['../datasets/dataset_NS_batch1', '../datasets/dataset_NS_batch2']
+2025-04-07 16:10:36,333 - INFO - [model_settings]
+2025-04-07 16:10:36,334 - INFO -   in_channels: 1
+2025-04-07 16:10:36,335 - INFO -   out_channels: 1
+2025-04-07 16:10:36,335 - INFO -   decoder_layer_size: 256
+2025-04-07 16:10:36,336 - INFO -   num_fno_layers: 6
+2025-04-07 16:10:36,336 - INFO -   num_fno_modes: [32, 32]
+2025-04-07 16:10:36,337 - INFO -   padding: 0
+2025-04-07 16:10:36,338 - INFO -   dimension: 2
+2025-04-07 16:10:36,338 - INFO -   latent_channels: 64
+2025-04-07 16:10:36,339 - INFO -   loss_type: JAC
+2025-04-07 16:10:36,339 - INFO -   train_eigen_count: 4
+2025-04-07 16:10:36,340 - INFO -   reg_param: 0.01
+2025-04-07 16:10:36,341 - INFO -   scale_factor: 5500.0
+2025-04-07 16:10:36,341 - INFO -   learning_rate: 0.0001
+2025-04-07 16:10:36,342 - INFO -   weight_decay: 1e-05
+2025-04-07 16:10:36,343 - INFO - [training_settings]
+2025-04-07 16:10:36,343 - INFO -   accum_steps: 1
+2025-04-07 16:10:36,344 - INFO -   num_epoch: 100
+2025-04-07 16:10:36,344 - INFO -   num_train: 2
+2025-04-07 16:10:36,345 - INFO -   num_test: 2
+2025-04-07 16:10:36,345 - INFO -   shuffle_train: True
+2025-04-07 16:10:36,346 - INFO -   shuffle_test: False
+2025-04-07 16:10:36,346 - INFO -   enable_checkpointing: True
+2025-04-07 16:10:36,347 - INFO -   log_checkpoint: False
+2025-04-07 16:10:36,347 - INFO -   checkpoint_interval: 1
+2025-04-07 16:10:36,348 - INFO -   save_top_k: 1
+2025-04-07 16:10:36,348 - INFO - [visualization_settings]
+2025-04-07 16:10:36,349 - INFO -   save_to_disk: False
+2025-04-07 16:10:36,350 - INFO -   log_to_neptune: True
+2025-04-07 16:10:36,350 - INFO -   num_plots: 2
+2025-04-07 16:10:36,351 - INFO -   check_val_every_n_epoch: 1
+2025-04-07 16:10:36,352 - INFO -   plot_interval: 1
+2025-04-07 16:10:36,352 - INFO - [neptune]
+2025-04-07 16:10:36,353 - INFO -   enabled: True
+2025-04-07 16:10:36,354 - INFO -   project: slim-gatech/Jayjay
+2025-04-07 16:10:46,202 - INFO - Starting training...
+2025-04-07 16:11:02,185 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:11:02,374 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:11:03,496 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:11:03,616 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:11:46,164 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:11:46,309 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:11:47,052 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:11:47,179 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:12:27,719 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:12:27,885 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:12:28,671 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:12:28,821 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:12:50,612 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:12:50,766 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:12:51,668 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:12:51,777 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:13:13,928 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:13:14,150 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:13:15,070 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:13:15,232 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:13:57,892 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:13:58,036 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:13:58,867 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:13:58,989 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:14:40,852 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:14:40,992 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:14:41,778 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:14:41,888 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:15:24,238 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:15:24,360 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:15:25,218 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:15:25,334 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:16:04,183 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:16:04,333 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:16:05,130 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:16:05,249 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:16:46,649 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:16:46,794 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:16:47,568 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:16:47,719 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:17:29,422 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:17:29,588 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:17:30,393 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:17:30,568 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:18:13,623 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:18:13,784 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:18:14,580 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:18:14,715 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:18:56,745 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:18:56,920 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:18:57,749 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:18:57,853 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:19:39,695 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:19:39,848 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:19:40,622 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:19:40,752 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:20:22,590 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:20:22,783 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:20:23,569 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:20:23,682 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:21:05,167 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:21:05,339 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:21:06,094 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:21:06,234 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:21:47,703 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:21:47,832 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:21:48,555 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:21:48,660 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:22:30,090 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:22:30,239 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:22:31,026 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:22:31,140 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:23:11,736 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:23:11,878 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:23:12,619 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:23:12,743 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:23:54,445 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:23:54,594 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:23:55,332 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:23:55,508 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:24:37,319 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:24:37,470 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:24:38,278 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:24:38,393 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:25:22,548 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:25:22,705 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:25:23,656 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:25:23,771 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:26:06,013 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:26:06,160 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:26:06,904 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:26:07,027 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:26:47,275 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:26:47,416 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:26:48,221 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:26:48,353 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:27:27,465 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:27:27,599 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:27:28,362 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:27:28,485 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:28:05,653 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:28:05,774 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:28:06,543 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:28:06,658 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:28:46,048 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:28:46,206 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:28:46,980 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:28:47,099 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:29:25,831 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:29:26,005 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:29:26,797 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:29:26,921 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:30:11,018 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:30:11,165 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:30:11,939 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:30:12,074 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:30:51,806 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:30:51,928 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:30:52,740 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:30:52,844 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:31:33,993 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:31:34,135 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:31:34,957 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:31:35,062 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:32:15,189 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:32:15,383 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:32:16,194 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:32:16,361 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:32:56,577 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:32:56,722 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:32:57,485 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:32:57,653 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:33:34,906 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:33:35,090 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:33:35,898 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:33:36,013 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:34:15,354 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:34:15,513 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:34:16,280 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:34:16,404 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:34:53,467 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:34:53,608 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:34:54,386 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:34:54,546 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:35:34,327 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:35:34,483 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:35:35,254 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:35:35,380 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:36:14,924 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:36:15,079 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:36:15,851 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:36:15,960 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:36:56,306 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:36:56,446 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:36:57,166 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:36:57,288 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:37:37,491 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:37:37,641 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:37:38,423 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:37:38,527 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:38:19,283 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:38:19,463 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:38:20,277 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:38:20,408 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:39:01,273 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:39:01,416 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:39:02,278 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:39:02,385 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:39:41,491 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:39:41,686 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:39:42,417 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:39:42,553 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:40:22,250 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:40:22,379 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:40:23,150 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:40:23,272 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:41:03,582 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:41:03,730 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:41:04,494 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:41:04,632 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:41:43,422 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:41:43,577 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:41:44,333 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:41:44,438 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:42:21,415 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:42:21,555 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:42:22,376 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:42:22,501 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:42:44,729 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:42:44,905 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:42:45,928 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:42:46,038 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:43:07,954 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:43:08,117 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:43:09,136 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:43:09,254 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:43:31,617 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:43:31,818 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:43:32,771 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:43:32,934 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:43:54,792 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:43:54,943 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:43:55,909 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:43:56,029 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:44:18,086 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:44:18,244 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:44:19,153 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:44:19,271 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:44:41,389 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:44:41,521 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:44:42,526 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:44:42,659 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:45:04,318 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:45:04,460 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:45:05,341 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:45:05,447 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:45:43,888 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:45:44,040 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:45:44,824 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:45:44,932 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:46:22,093 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:46:22,243 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:46:23,050 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:46:23,184 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:47:02,679 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:47:02,845 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:47:03,641 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:47:03,792 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:47:26,110 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:47:26,322 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:47:27,250 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:47:27,373 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:47:49,025 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:47:49,173 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:47:50,045 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:47:50,159 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:48:10,865 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:48:11,023 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:48:12,029 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:48:12,166 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:48:33,560 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:48:33,713 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:48:34,636 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:48:34,783 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:48:56,158 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:48:56,325 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:48:57,214 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:48:57,347 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:49:18,393 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:49:18,601 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:49:19,616 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:49:19,719 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:49:40,782 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:49:40,929 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:49:41,661 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:49:41,753 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:50:05,087 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:50:05,214 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:50:06,035 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:50:06,163 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:50:28,539 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:50:28,697 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:50:29,660 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:50:29,790 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:50:51,560 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:50:51,724 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:50:52,639 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:50:52,771 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:51:15,184 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:51:15,328 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:51:16,230 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:51:16,346 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:51:38,315 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:51:38,449 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:51:39,407 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:51:39,552 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:52:01,637 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:52:01,784 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:52:02,780 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:52:02,915 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:52:24,206 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:52:24,335 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:52:25,172 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:52:25,307 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:52:47,113 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:52:47,247 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:52:48,161 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:52:48,313 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:53:09,857 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:53:09,993 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:53:10,945 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:53:11,048 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:53:32,911 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:53:33,069 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:53:33,798 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:53:33,902 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:53:56,164 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:53:56,321 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:53:57,329 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:53:57,453 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:54:18,133 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:54:18,360 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:54:19,340 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:54:19,455 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:54:41,864 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:54:41,993 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:54:42,927 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:54:43,037 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:55:04,961 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:55:05,125 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:55:06,122 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:55:06,234 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:55:27,146 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:55:27,303 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:55:28,310 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:55:28,442 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:55:50,602 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:55:50,744 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:55:51,692 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:55:51,835 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:56:13,978 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:56:14,132 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:56:15,091 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:56:15,238 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:56:36,590 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:56:36,762 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:56:37,693 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:56:37,800 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:57:00,178 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:57:00,315 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:57:01,302 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:57:01,418 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:57:22,543 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:57:22,722 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:57:23,652 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:57:23,770 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:57:44,616 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:57:44,756 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:57:45,666 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:57:45,776 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:58:06,884 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:58:07,033 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:58:07,849 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:58:07,977 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:58:29,948 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:58:30,122 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:58:31,049 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:58:31,173 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:58:52,028 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:58:52,174 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:58:53,074 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:58:53,219 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:59:14,550 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:59:14,684 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:59:15,633 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:59:15,737 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:59:37,357 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 16:59:37,504 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 16:59:38,425 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:59:38,557 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 16:59:59,733 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 16:59:59,910 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:00:00,820 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:00:00,967 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:00:22,621 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:00:22,832 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:00:23,807 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:00:23,928 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:00:45,580 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:00:45,721 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:00:46,647 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:00:46,769 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:01:09,651 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:01:09,819 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:01:10,835 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:01:10,965 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:01:32,717 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:01:32,915 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:01:33,835 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:01:33,978 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:01:55,844 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:01:56,017 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:01:57,003 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:01:57,140 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:02:19,800 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:02:19,971 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:02:20,982 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:02:21,084 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:02:42,694 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:02:42,857 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:02:43,797 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:02:43,923 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:03:04,605 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:03:04,787 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:03:05,735 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:03:05,879 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:03:27,149 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.02095711..0.023649048].
+2025-04-07 17:03:27,370 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.6467512..0.42454535].
+2025-04-07 17:03:28,348 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.025091397..0.018795386].
+2025-04-07 17:03:28,463 - WARNING - Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.78346425..0.8155918].
+2025-04-07 17:05:43,429 - INFO - Best model saved at: /mnt/c/Users/D2A2/Documents/DeFINO_Richard/train/checkpoints/n=128_e=8_m=FNO_s=RFS_l=JAC_20250407_161036/n=128_e=8_m=FNO_s=RFS_l=JAC_epoch=055_val_rel_l2_loss=0.7141.ckpt
+2025-04-07 17:05:44,313 - INFO - Training completed

@@ -36,6 +36,18 @@ def create_simulator(model_type, simulator_settings):
                                      simulator_settings['nu'],
                                      simulator_settings['nburn'],
                                      simulator_settings['nsteps'])
+    elif model_type == "SWE":
+        from simulators.swe import SWE_Nonlinear
+        return SWE_Nonlinear(0.0,
+                             1.0,
+                             0.0,
+                             1.0,
+                             simulator_settings['s1'],
+                             simulator_settings['s2'],
+                             simulator_settings['g'],
+                             simulator_settings['nu'],
+                             1.0,
+                             simulator_settings['dt'])
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -80,6 +92,8 @@ def generate_dataset(simulator, reduced_model, data_settings, viz_settings):
             print(f"Eigenvector {e + 1} of {eigen_count}")
             vector = v[:, e].reshape(x.shape).to(x.device)
             y, jvp_vector = torch.func.jvp(simulator, (x,), (vector,))
+
+            # y, jvp_vector = torch.func.jvp(simulator, (x,), (vector,))
             Jvp[:, e] = jvp_vector.reshape(simulator.range)
 
         if i % plot_interval == 0:

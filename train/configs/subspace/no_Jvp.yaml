@@ -1,9 +1,9 @@
 base_config: ../ns_default.yaml
 
 experiment:
-  name: "n=64_m=FNO_l=L2"
+  name: "n=128_m=FNO_l=L2"
   tags:
-    - "64 samples"
+    - "128 samples"
     - "FNO"
 
 model_settings:
@@ -11,6 +11,6 @@ model_settings:
   learning_rate: 8e-4
 
 training_settings:
-  num_train: 64
-  num_test: 8
+  num_train: 128
+  num_test: 16
   num_epoch: 150
