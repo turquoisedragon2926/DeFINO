@@ -1,0 +1,5 @@
+Computing Q_b for subsample 1/200
+/nethome/jpark3141/.conda/envs/defino-env/lib/python3.11/site-packages/torch/autograd/graph.py:769: UserWarning: Attempting to run cuFFT, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /opt/conda/conda-bld/pytorch_1724789172399/work/aten/src/ATen/native/cuda/SpectralOps.cpp:269.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/net/slimdata/jayjaydata2/DeFINO_Richard/datasets/simulators/NS.py:58: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig, ax = plt.subplots(figsize=(6, 6))
